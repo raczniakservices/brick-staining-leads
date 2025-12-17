@@ -1,28 +1,42 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const twilio = require('twilio');
 const app = express();
 
 // ===========================================
 // CONFIGURATION
 // ===========================================
 const CONFIG = {
-    // Twilio credentials (get from twilio.com/console)
-    TWILIO_ACCOUNT_SID: 'YOUR_ACCOUNT_SID',
-    TWILIO_AUTH_TOKEN: 'YOUR_AUTH_TOKEN',
-    TWILIO_PHONE_NUMBER: '+1XXXXXXXXXX',
+    // Twilio credentials (ONE account for all clients)
+    // Use environment variables for security (Render will set these)
+    // For local testing, create a .env file (not committed to git)
+    TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
+    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
     
-    // Your form URL (update after deploying)
-    FORM_URL: 'http://localhost:3000',
+    // Base URL - automatically detects if running on Render or locally
+    BASE_URL: process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL || 'http://localhost:3000',
     
-    // Business info
-    BUSINESS_NAME: 'Preferred Brick Staining Solutions',
-    BUSINESS_PHONE: '443-278-1451',
+    // Client configurations - map phone numbers to business info
+    // Add a new entry for each client
+    CLIENTS: {
+        // Brick Staining
+        '+18663288123': {
+            businessName: 'Preferred Brick Staining Solutions',
+            businessPhone: '443-278-1451',
+            formUrl: CONFIG.BASE_URL,
+            slug: 'brick-staining' // for routing to specific forms/admin
+        }
+        // Add more clients like this:
+        // '+1YYYYYYYYYY': {
+        //     businessName: 'Another Business',
+        //     businessPhone: '555-123-4567',
+        //     formUrl: 'https://another-business.com/form',
+        //     slug: 'another-business'
+        // }
+    },
     
-    // Your phone for testing
-    TEST_PHONE: '443-876-1983',
-    
-    PORT: 3000
+    PORT: process.env.PORT || 3000
 };
 
 // ===========================================
@@ -79,40 +93,84 @@ app.get('/api/leads', (req, res) => {
 // Twilio SMS webhook
 app.post('/sms-webhook', (req, res) => {
     const fromNumber = req.body.From;
-    console.log(`SMS from ${fromNumber}`);
+    const toNumber = req.body.To; // This tells us which client
+    const messageBody = req.body.Body || '';
     
-    const message = `Thanks for reaching out to ${CONFIG.BUSINESS_NAME}!
+    // Find which client this phone number belongs to
+    const client = CONFIG.CLIENTS[toNumber];
+    
+    if (!client) {
+        console.error(`Unknown Twilio number: ${toNumber}`);
+        const twiml = new twilio.twiml.MessagingResponse();
+        twiml.message('Sorry, this number is not configured.');
+        res.type('text/xml');
+        return res.send(twiml.toString());
+    }
+    
+    console.log(`[${client.businessName}] SMS from ${fromNumber}: "${messageBody}"`);
+    
+    // Auto-reply with form link using client's info
+    const replyMessage = `Thanks for reaching out to ${client.businessName}!
 
 To get your free quote, fill out our quick form:
-${CONFIG.FORM_URL}
+${client.formUrl}
 
 We'll review your project and contact you within 24 hours.`;
 
+    const twiml = new twilio.twiml.MessagingResponse();
+    twiml.message(replyMessage);
+
     res.type('text/xml');
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Message>${message}</Message>
-</Response>`);
+    res.send(twiml.toString());
 });
 
 // Twilio voice webhook
 app.post('/voice-webhook', (req, res) => {
     const fromNumber = req.body.From;
-    console.log(`Call from ${fromNumber}`);
+    const toNumber = req.body.To; // This tells us which client
+    const callSid = req.body.CallSid;
     
-    const smsMessage = `Thanks for calling ${CONFIG.BUSINESS_NAME}!
+    // Find which client this phone number belongs to
+    const client = CONFIG.CLIENTS[toNumber];
+    
+    if (!client) {
+        console.error(`Unknown Twilio number: ${toNumber}`);
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.say('Sorry, this number is not configured.');
+        res.type('text/xml');
+        return res.send(twiml.toString());
+    }
+    
+    console.log(`[${client.businessName}] Call from ${fromNumber} (CallSid: ${callSid})`);
+    
+    const smsMessage = `Thanks for calling ${client.businessName}!
 
 To get your free quote, fill out our quick form:
-${CONFIG.FORM_URL}
+${client.formUrl}
 
 We'll review your project and contact you within 24 hours.`;
 
+    const twiml = new twilio.twiml.VoiceResponse();
+    twiml.say({
+        voice: 'alice'
+    }, `Thank you for calling ${client.businessName}. We just sent you a text message with a link to request your free quote. Please check your messages. We look forward to helping with your project.`);
+    
+    // Send SMS after the call
+    if (CONFIG.TWILIO_ACCOUNT_SID !== 'YOUR_ACCOUNT_SID' && CONFIG.TWILIO_AUTH_TOKEN !== 'YOUR_AUTH_TOKEN') {
+        const twilioClient = twilio(CONFIG.TWILIO_ACCOUNT_SID, CONFIG.TWILIO_AUTH_TOKEN);
+        twilioClient.messages.create({
+            body: smsMessage,
+            to: fromNumber,
+            from: toNumber // Use the same number that received the call
+        }).then(msg => {
+            console.log(`[${client.businessName}] SMS sent to ${fromNumber}: ${msg.sid}`);
+        }).catch(err => {
+            console.error(`[${client.businessName}] Error sending SMS:`, err);
+        });
+    }
+
     res.type('text/xml');
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="alice">Thank you for calling Preferred Brick Staining Solutions. We just sent you a text message with a link to request your free quote. Please check your messages. We look forward to helping with your project.</Say>
-    <Sms>${smsMessage}</Sms>
-</Response>`);
+    res.send(twiml.toString());
 });
 
 app.get('/admin', (req, res) => {

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Session | Aura Photography</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #b8860b;
+            --bg: #0a0a0a;
+            --card: #141414;
+            --card-border: #2a2a2a;
+            --text: #ffffff;
+            --muted: #888888;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .hero {
+            background: linear-gradient(180deg, #1a1a1a 0%, var(--bg) 100%);
+            padding: 50px 20px 30px;
+            text-align: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .brand {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 30px 20px 40px;
+        }
+
+        .sessions {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .session {
+            background: var(--card);
+            border: 2px solid var(--card-border);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .session:hover, .session.selected {
+            border-color: var(--primary);
+        }
+
+        .session.selected {
+            background: linear-gradient(135deg, rgba(184,134,11,0.1) 0%, transparent 100%);
+        }
+
+        .session-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--muted);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .session.selected .session-radio {
+            border-color: var(--primary);
+        }
+
+        .session.selected .session-radio::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .session-info h3 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .session-info p {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .session-price {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .form-section {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .section-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: var(--muted);
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        input::placeholder { color: #555; }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            cursor: pointer;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            border: none;
+            border-radius: 6px;
+            color: black;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 24px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(184,134,11,0.3);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 12px;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .social-links a {
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .social-links a:hover {
+            color: var(--primary);
+        }
+
+        @media (max-width: 500px) {
+            h1 { font-size: 32px; }
+            .row { grid-template-columns: 1fr; }
+            .form-section { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="brand">Aura Photography</div>
+        <h1>Capturing Your<br>Beautiful Moments</h1>
+        <p>Let's create timeless images that tell your story</p>
+    </div>
+
+    <div class="container">
+        <div class="sessions">
+            <div class="session selected">
+                <div class="session-radio"></div>
+                <div class="session-info">
+                    <h3>Portrait Session</h3>
+                    <p>Individual or couple portraits</p>
+                </div>
+                <div class="session-price">From $250</div>
+            </div>
+
+            <div class="session">
+                <div class="session-radio"></div>
+                <div class="session-info">
+                    <h3>Family Session</h3>
+                    <p>Family portraits and milestones</p>
+                </div>
+                <div class="session-price">From $400</div>
+            </div>
+
+            <div class="session">
+                <div class="session-radio"></div>
+                <div class="session-info">
+                    <h3>Wedding</h3>
+                    <p>Full wedding coverage</p>
+                </div>
+                <div class="session-price">From $2,500</div>
+            </div>
+
+            <div class="session">
+                <div class="session-radio"></div>
+                <div class="session-info">
+                    <h3>Maternity</h3>
+                    <p>Beautiful pregnancy portraits</p>
+                </div>
+                <div class="session-price">From $300</div>
+            </div>
+
+            <div class="session">
+                <div class="session-radio"></div>
+                <div class="session-info">
+                    <h3>Event Photography</h3>
+                    <p>Corporate events, parties, celebrations</p>
+                </div>
+                <div class="session-price">Custom Quote</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">Your Details</div>
+
+            <form>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" placeholder="Your name">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" placeholder="email@example.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" placeholder="(555) 123-4567">
+                </div>
+
+                <div class="form-group">
+                    <label>Preferred Date</label>
+                    <input type="text" placeholder="Select a date or range">
+                </div>
+
+                <div class="form-group">
+                    <label>Tell me about your vision</label>
+                    <textarea placeholder="Location ideas, style preferences, special requests..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>How did you find me?</label>
+                    <select>
+                        <option value="">Select one</option>
+                        <option>Instagram</option>
+                        <option>Pinterest</option>
+                        <option>Google Search</option>
+                        <option>Friend Referral</option>
+                        <option>Wedding Vendor</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="submit-btn">Send Inquiry →</button>
+            </form>
+        </div>
+
+        <div class="footer">
+            <p>Based in California · Available for travel worldwide</p>
+            <div class="social-links">
+                <a href="#">Instagram</a>
+                <a href="#">Pinterest</a>
+                <a href="#">Portfolio</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

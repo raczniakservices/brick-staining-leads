@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Roof Inspection | Summit Roofing Co.</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1e3a5f;
+            --accent: #e63946;
+            --bg: #f5f6f8;
+            --card: #ffffff;
+            --text: #1a1a1a;
+            --muted: #6c757d;
+            --border: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, #0d1b2a 100%);
+            padding: 50px 20px 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: 15px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: -30px auto 40px;
+            padding: 0 20px;
+        }
+
+        .form-card {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-align: center;
+            color: var(--primary);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .service-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .service-option:hover {
+            border-color: var(--primary);
+            background: #f8f9ff;
+        }
+
+        .service-option.selected {
+            border-color: var(--primary);
+            background: #e8edff;
+        }
+
+        .service-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        select {
+            appearance: none;
+            background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center;
+            cursor: pointer;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .trust-badge {
+            text-align: center;
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .trust-badge strong {
+            display: block;
+            font-size: 18px;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 8px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        @media (max-width: 500px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-card {
+                padding: 24px;
+            }
+
+            .trust-badges {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hero">
+        <div class="badge">Free Inspection</div>
+        <h1>SUMMIT ROOFING CO.</h1>
+        <p>Trusted by 2,000+ Maryland homeowners since 2008</p>
+    </div>
+
+    <div class="container">
+        <div class="form-card">
+            <div class="form-title">Schedule Your Free Roof Inspection</div>
+
+            <form>
+                <div class="form-group">
+                    <label>What services do you need?</label>
+                    <div class="services-grid">
+                        <label class="service-option selected">
+                            <input type="checkbox" checked>
+                            <span>Roof Repair</span>
+                        </label>
+                        <label class="service-option">
+                            <input type="checkbox">
+                            <span>Full Replacement</span>
+                        </label>
+                        <label class="service-option">
+                            <input type="checkbox">
+                            <span>Storm Damage</span>
+                        </label>
+                        <label class="service-option">
+                            <input type="checkbox">
+                            <span>Free Inspection</span>
+                        </label>
+                        <label class="service-option">
+                            <input type="checkbox">
+                            <span>Gutter Service</span>
+                        </label>
+                        <label class="service-option">
+                            <input type="checkbox">
+                            <span>Emergency Repair</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" placeholder="Smith">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" placeholder="(410) 555-1234">
+                </div>
+
+                <div class="form-group">
+                    <label>Property Address</label>
+                    <input type="text" placeholder="123 Main St, Baltimore, MD">
+                </div>
+
+                <div class="form-group">
+                    <label>Additional Details</label>
+                    <textarea placeholder="Describe any issues you've noticed or questions you have..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">Get My Free Inspection</button>
+            </form>
+
+            <div class="trust-badges">
+                <div class="trust-badge">
+                    <strong>500+</strong>
+                    5-Star Reviews
+                </div>
+                <div class="trust-badge">
+                    <strong>15+</strong>
+                    Years Experience
+                </div>
+                <div class="trust-badge">
+                    <strong>Licensed</strong>
+                    & Insured
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Serving Maryland & DC Metro · <a href="tel:410-555-0123">410-555-0123</a>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Now | Elite Auto Detailing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #ffd700;
+            --bg: #0a0a0a;
+            --card: #141414;
+            --card-border: #2a2a2a;
+            --text: #ffffff;
+            --muted: #888888;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .hero {
+            background: linear-gradient(180deg, #1a1a1a 0%, var(--bg) 100%);
+            padding: 50px 20px 30px;
+            text-align: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .brand {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 30px 20px 40px;
+        }
+
+        .packages {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .package {
+            background: var(--card);
+            border: 2px solid var(--card-border);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .package:hover, .package.selected {
+            border-color: var(--primary);
+        }
+
+        .package.selected {
+            background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, transparent 100%);
+        }
+
+        .package-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--muted);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .package.selected .package-radio {
+            border-color: var(--primary);
+        }
+
+        .package.selected .package-radio::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .package-info h3 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .package-info p {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .package-price {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .popular-tag {
+            background: var(--primary);
+            color: black;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            position: absolute;
+            top: -10px;
+            right: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .package.popular {
+            position: relative;
+        }
+
+        .form-section {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .section-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: var(--muted);
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        input::placeholder { color: #555; }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            cursor: pointer;
+        }
+
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .addons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .addon {
+            padding: 10px 14px;
+            background: var(--bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .addon:hover, .addon.selected {
+            border-color: var(--primary);
+            background: rgba(255,215,0,0.1);
+        }
+
+        .addon .price {
+            color: var(--primary);
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            border: none;
+            border-radius: 6px;
+            color: black;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 24px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255,215,0,0.3);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        @media (max-width: 500px) {
+            h1 { font-size: 32px; }
+            .row { grid-template-columns: 1fr; }
+            .form-section { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="brand">Elite Auto Detailing</div>
+        <h1>Your Car Deserves<br>The Best</h1>
+        <p>Mobile detailing that comes to you</p>
+    </div>
+
+    <div class="container">
+        <div class="packages">
+            <div class="package">
+                <div class="package-radio"></div>
+                <div class="package-info">
+                    <h3>Express Wash</h3>
+                    <p>Exterior wash, windows, tire shine</p>
+                </div>
+                <div class="package-price">$49</div>
+            </div>
+
+            <div class="package popular selected">
+                <div class="popular-tag">Most Popular</div>
+                <div class="package-radio"></div>
+                <div class="package-info">
+                    <h3>Full Detail</h3>
+                    <p>Interior + exterior, vacuum, wipe down</p>
+                </div>
+                <div class="package-price">$149</div>
+            </div>
+
+            <div class="package">
+                <div class="package-radio"></div>
+                <div class="package-info">
+                    <h3>Premium Detail</h3>
+                    <p>Full detail + clay bar, wax, leather care</p>
+                </div>
+                <div class="package-price">$249</div>
+            </div>
+
+            <div class="package">
+                <div class="package-radio"></div>
+                <div class="package-info">
+                    <h3>Showroom Package</h3>
+                    <p>Complete restoration, paint correction, ceramic</p>
+                </div>
+                <div class="package-price">$449</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">Your Information</div>
+
+            <form>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" placeholder="John Smith">
+                </div>
+
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" placeholder="(555) 123-4567">
+                </div>
+
+                <div class="form-group">
+                    <label>Vehicle</label>
+                    <div class="row">
+                        <input type="text" placeholder="Make (Toyota)">
+                        <input type="text" placeholder="Model (Camry)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Vehicle Type</label>
+                    <select>
+                        <option>Sedan / Coupe</option>
+                        <option>SUV / Crossover</option>
+                        <option>Truck</option>
+                        <option>Van / Minivan</option>
+                        <option>Sports Car</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Add-ons</label>
+                    <div class="addons">
+                        <div class="addon">Pet Hair Removal <span class="price">+$30</span></div>
+                        <div class="addon selected">Engine Bay <span class="price">+$40</span></div>
+                        <div class="addon">Headlight Restore <span class="price">+$50</span></div>
+                        <div class="addon">Odor Removal <span class="price">+$35</span></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Location (We Come To You)</label>
+                    <input type="text" placeholder="Your address or workplace">
+                </div>
+
+                <button type="submit" class="submit-btn">Book My Detail →</button>
+            </form>
+        </div>
+
+        <div class="footer">
+            Questions? Text or call <a href="tel:555-123-4567">555-123-4567</a>
+        </div>
+    </div>
+</body>
+</html>
