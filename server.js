@@ -161,50 +161,48 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
         console.log('Uploading', files.length, 'photo(s) to Cloudinary...');
 
         const photoUrls = [];
+        const photoData = []; // Fallback: store as base64 if Cloudinary fails
+        
         for (const file of files) {
             try {
-                // Use unsigned upload - no signature required!
-                // First, we need to create an upload preset in Cloudinary console
-                // For now, let's try direct upload without signature
+                // Try Cloudinary upload
                 const base64 = file.buffer.toString('base64');
                 const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64}`;
                 
-                // Try unsigned upload first (if preset exists)
-                // Otherwise fall back to signed upload
-                let result;
-                try {
-                    // Attempt unsigned upload (requires upload preset)
-                    result = await cloudinary.uploader.upload(dataUri, {
-                        folder: 'brick-staining-leads',
-                        upload_preset: 'brick_staining_leads', // Create this in Cloudinary
-                        unsigned: true
-                    });
-                } catch (unsignedError) {
-                    // If unsigned fails, try signed with explicit config
-                    console.log('Unsigned upload failed, trying signed upload...');
-                    result = await cloudinary.uploader.upload(dataUri, {
-                        folder: 'brick-staining-leads',
-                        resource_type: 'image'
-                    });
-                }
+                const result = await cloudinary.uploader.upload(dataUri, {
+                    folder: 'brick-staining-leads',
+                    resource_type: 'image'
+                });
                 
                 photoUrls.push(result.secure_url);
-                console.log('Photo uploaded successfully:', result.secure_url);
+                console.log('Photo uploaded to Cloudinary:', result.secure_url);
             } catch (error) {
-                console.error('Photo upload failed:', file.originalname);
-                console.error('Error:', error.message);
-                console.error('Error code:', error.http_code);
-                // Continue - don't block form submission
+                console.warn('Cloudinary upload failed, storing as base64:', file.originalname);
+                // Fallback: store as base64 data URI
+                const base64 = file.buffer.toString('base64');
+                const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64}`;
+                photoData.push({
+                    name: file.originalname,
+                    data: dataUri,
+                    size: file.size
+                });
             }
         }
+        
+        // Return both Cloudinary URLs and base64 fallbacks
+        const response = {
+            success: true,
+            photos: photoUrls,
+            photoData: photoData // Base64 fallback
+        };
         
         // Return success even if photos failed (form already submitted)
         if (photoUrls.length === 0 && files.length > 0) {
             console.warn('Photo uploads failed, but form submission succeeded');
         }
 
-        console.log('All photos uploaded. Total:', photoUrls.length);
-        res.json({ success: true, photos: photoUrls });
+        console.log(`Photos: ${photoUrls.length} uploaded to Cloudinary, ${photoData.length} stored as base64`);
+        res.json(response);
     } catch (error) {
         console.error('Error uploading photos:', error);
         console.error('Error details:', error.message, error.stack);
