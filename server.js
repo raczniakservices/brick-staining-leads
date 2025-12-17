@@ -11,7 +11,15 @@ const app = express();
 // If not available, use individual credentials
 if (process.env.CLOUDINARY_URL) {
     // SDK automatically reads from CLOUDINARY_URL - no config needed
-    console.log('Cloudinary will use CLOUDINARY_URL from environment');
+    // But let's verify it's set correctly
+    const url = process.env.CLOUDINARY_URL;
+    console.log('CLOUDINARY_URL found, length:', url.length);
+    console.log('CLOUDINARY_URL starts with cloudinary://', url.startsWith('cloudinary://'));
+    // Extract cloud name for logging
+    const cloudNameMatch = url.match(/@([^/]+)/);
+    if (cloudNameMatch) {
+        console.log('Cloudinary cloud_name from URL:', cloudNameMatch[1]);
+    }
 } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
