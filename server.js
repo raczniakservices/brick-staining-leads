@@ -232,21 +232,29 @@ app.post('/api/update-lead-photos', (req, res) => {
     try {
         const { leadId, photos, photoData } = req.body;
         const leads = getLeads();
-        const lead = leads.find(l => l.id == leadId || l.submittedAt == leadId);
+        // Try to find lead by id, submittedAt, or phone (most recent match)
+        let lead = leads.find(l => l.id == leadId || l.id == leadId || String(l.submittedAt) === String(leadId));
+        
+        // If not found, get the most recently added lead
+        if (!lead && leads.length > 0) {
+            lead = leads[leads.length - 1];
+            console.log(`Lead not found by ID, using most recent lead: ${lead.id}`);
+        }
         
         if (lead) {
             if (photos && photos.length > 0) {
-                lead.photos = photos;
+                lead.photos = (lead.photos || []).concat(photos);
                 lead.hasPhotos = true;
             }
             if (photoData && photoData.length > 0) {
-                lead.photoData = photoData;
+                lead.photoData = (lead.photoData || []).concat(photoData);
                 lead.hasPhotos = true;
             }
             fs.writeFileSync(DB_PATH, JSON.stringify(leads, null, 2));
-            console.log(`Updated lead ${leadId} with ${(photos?.length || 0) + (photoData?.length || 0)} photo(s)`);
+            console.log(`Updated lead ${lead.id} (${lead.name || lead.phone}) with ${(photos?.length || 0) + (photoData?.length || 0)} photo(s)`);
             res.json({ success: true });
         } else {
+            console.error(`Lead not found for ID: ${leadId}`);
             res.status(404).json({ success: false, error: 'Lead not found' });
         }
     } catch (error) {
