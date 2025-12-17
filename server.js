@@ -163,33 +163,37 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
         const photoUrls = [];
         for (const file of files) {
             try {
-                // Try upload_stream with minimal options
-                const result = await new Promise((resolve, reject) => {
-                    const uploadStream = cloudinary.uploader.upload_stream(
-                        {
-                            folder: 'brick-staining-leads'
-                        },
-                        (error, result) => {
-                            if (error) {
-                                reject(error);
-                            } else {
-                                resolve(result);
-                            }
-                        }
-                    );
-                    uploadStream.end(file.buffer);
-                });
+                // Use unsigned upload - no signature required!
+                // First, we need to create an upload preset in Cloudinary console
+                // For now, let's try direct upload without signature
+                const base64 = file.buffer.toString('base64');
+                const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64}`;
+                
+                // Try unsigned upload first (if preset exists)
+                // Otherwise fall back to signed upload
+                let result;
+                try {
+                    // Attempt unsigned upload (requires upload preset)
+                    result = await cloudinary.uploader.upload(dataUri, {
+                        folder: 'brick-staining-leads',
+                        upload_preset: 'brick_staining_leads', // Create this in Cloudinary
+                        unsigned: true
+                    });
+                } catch (unsignedError) {
+                    // If unsigned fails, try signed with explicit config
+                    console.log('Unsigned upload failed, trying signed upload...');
+                    result = await cloudinary.uploader.upload(dataUri, {
+                        folder: 'brick-staining-leads',
+                        resource_type: 'image'
+                    });
+                }
                 
                 photoUrls.push(result.secure_url);
                 console.log('Photo uploaded successfully:', result.secure_url);
             } catch (error) {
                 console.error('Photo upload failed:', file.originalname);
                 console.error('Error:', error.message);
-                // Check if it's a signature error
-                if (error.http_code === 401) {
-                    console.error('SIGNATURE ERROR - API secret may be incorrect');
-                    console.error('Please verify API secret in Cloudinary console matches CLOUDINARY_URL');
-                }
+                console.error('Error code:', error.http_code);
                 // Continue - don't block form submission
             }
         }
