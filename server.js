@@ -9,8 +9,19 @@ const app = express();
 // Cloudinary configuration - use CLOUDINARY_URL if available (recommended), otherwise use individual vars
 if (process.env.CLOUDINARY_URL) {
     // Use the full URL format (recommended by Cloudinary)
-    // Cloudinary SDK automatically reads CLOUDINARY_URL from environment
-    console.log('Cloudinary configured using CLOUDINARY_URL');
+    // Parse the URL to extract credentials
+    const url = process.env.CLOUDINARY_URL;
+    const match = url.match(/cloudinary:\/\/(\d+):([^@]+)@(.+)/);
+    if (match) {
+        cloudinary.config({
+            cloud_name: match[3],
+            api_key: match[1],
+            api_secret: match[2]
+        });
+        console.log('Cloudinary configured using CLOUDINARY_URL, cloud_name:', match[3]);
+    } else {
+        console.error('Invalid CLOUDINARY_URL format');
+    }
 } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
     // Fallback to individual credentials
     cloudinary.config({
