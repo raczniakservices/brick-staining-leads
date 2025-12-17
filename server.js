@@ -289,6 +289,25 @@ app.get('/api/leads', checkAuth, (req, res) => {
     res.json(getLeads());
 });
 
+// Debug endpoint to check a specific lead's photo data
+app.get('/api/debug-lead/:id', checkAuth, (req, res) => {
+    const leads = getLeads();
+    const lead = leads.find(l => l.id == req.params.id);
+    if (lead) {
+        res.json({
+            id: lead.id,
+            name: lead.name,
+            phone: lead.phone,
+            hasPhotos: lead.hasPhotos,
+            photos: lead.photos || [],
+            photoData: lead.photoData ? lead.photoData.map(p => ({ name: p.name, size: p.size, hasData: !!p.data })) : [],
+            photosCount: (lead.photos?.length || 0) + (lead.photoData?.length || 0)
+        });
+    } else {
+        res.status(404).json({ error: 'Lead not found' });
+    }
+});
+
 // Update lead status
 app.put('/api/leads/:id/status', checkAuth, (req, res) => {
     try {
