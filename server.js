@@ -9,7 +9,7 @@ const app = express();
 // Cloudinary configuration - use CLOUDINARY_URL if available (recommended), otherwise use individual vars
 if (process.env.CLOUDINARY_URL) {
     // Use the full URL format (recommended by Cloudinary)
-    cloudinary.config();
+    // Cloudinary SDK automatically reads CLOUDINARY_URL from environment
     console.log('Cloudinary configured using CLOUDINARY_URL');
 } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
     // Fallback to individual credentials
@@ -21,6 +21,12 @@ if (process.env.CLOUDINARY_URL) {
     console.log('Cloudinary configured with individual credentials, cloud_name:', process.env.CLOUDINARY_CLOUD_NAME);
 } else {
     console.warn('Cloudinary not configured. Missing credentials.');
+    console.warn('Have CLOUDINARY_URL?', !!process.env.CLOUDINARY_URL);
+    console.warn('Have individual vars?', {
+        cloud_name: !!process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: !!process.env.CLOUDINARY_API_KEY,
+        api_secret: !!process.env.CLOUDINARY_API_SECRET
+    });
 }
 
 // Multer for file uploads (memory storage)
@@ -100,12 +106,14 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Photo upload endpoint
-app.post('/api/upload-photos', upload.array('photos', 5), async (req, res) => {
+// Photo upload endpoint - accept both 'photos' and 'photo' field names
+app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, { name: 'photo', maxCount: 5 }]), async (req, res) => {
     try {
-        console.log('Photo upload request received, files:', req.files ? req.files.length : 0);
+        // Handle both 'photos' and 'photo' field names
+        const files = req.files?.photos || req.files?.photo || [];
+        console.log('Photo upload request received, files:', files.length);
         
-        if (!req.files || req.files.length === 0) {
+        if (!files || files.length === 0) {
             console.log('No files in request');
             return res.json({ success: true, photos: [] });
         }
@@ -117,10 +125,10 @@ app.post('/api/upload-photos', upload.array('photos', 5), async (req, res) => {
             return res.json({ success: true, photos: [] });
         }
         
-        console.log('Uploading', req.files.length, 'photo(s) to Cloudinary...');
+        console.log('Uploading', files.length, 'photo(s) to Cloudinary...');
 
         const photoUrls = [];
-        for (const file of req.files) {
+        for (const file of files) {
             const result = await new Promise((resolve, reject) => {
                 const uploadStream = cloudinary.uploader.upload_stream(
                     { folder: 'brick-staining-leads', resource_type: 'auto' },
