@@ -214,6 +214,12 @@ app.post('/api/submit-lead', (req, res) => {
     try {
         const lead = saveLead(req.body);
         console.log(`New lead: ${lead.name || `${lead.firstName} ${lead.lastName}`} - ${lead.phone}`);
+        if (lead.photos && lead.photos.length > 0) {
+            console.log(`  - ${lead.photos.length} photo(s) from Cloudinary`);
+        }
+        if (lead.photoData && lead.photoData.length > 0) {
+            console.log(`  - ${lead.photoData.length} photo(s) stored as base64`);
+        }
         res.json({ success: true });
     } catch (error) {
         console.error('Error saving lead:', error);
