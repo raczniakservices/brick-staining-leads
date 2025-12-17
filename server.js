@@ -163,36 +163,34 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
         const photoUrls = [];
         for (const file of files) {
             try {
-                // Use upload_stream which is more reliable for server-side uploads
-                const result = await new Promise((resolve, reject) => {
-                    const uploadStream = cloudinary.uploader.upload_stream(
-                        {
-                            folder: 'brick-staining-leads',
-                            resource_type: 'auto',
-                            use_filename: true,
-                            unique_filename: true,
-                            // Don't use signatures for server-side uploads
-                            overwrite: false
-                        },
-                        (error, result) => {
-                            if (error) {
-                                console.error('Cloudinary upload_stream error:', error);
-                                console.error('Error message:', error.message);
-                                console.error('Error http_code:', error.http_code);
-                                reject(error);
-                            } else {
-                                resolve(result);
-                            }
-                        }
-                    );
-                    uploadStream.end(file.buffer);
+                // Use upload method with buffer directly - more reliable for server-side
+                // Convert buffer to base64 data URI
+                const base64Data = file.buffer.toString('base64');
+                const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64Data}`;
+                
+                console.log('Uploading file:', file.originalname, 'size:', file.size, 'bytes');
+                
+                const result = await cloudinary.uploader.upload(dataUri, {
+                    folder: 'brick-staining-leads',
+                    resource_type: 'auto',
+                    use_filename: true,
+                    unique_filename: true,
+                    overwrite: false,
+                    // Explicitly don't use signatures for server-side uploads
+                    unsigned: false // false because we have API secret
                 });
                 
                 photoUrls.push(result.secure_url);
                 console.log('Photo uploaded successfully:', result.secure_url);
             } catch (error) {
                 console.error('Cloudinary upload error for file:', file.originalname);
-                console.error('Full error:', JSON.stringify(error, null, 2));
+                console.error('Error message:', error.message);
+                console.error('Error http_code:', error.http_code);
+                console.error('Error name:', error.name);
+                if (error.http_code === 401) {
+                    console.error('AUTHENTICATION ERROR - Check API secret in CLOUDINARY_URL');
+                    console.error('Current API secret length:', cloudinary.config().api_secret?.length || 'NOT SET');
+                }
                 throw error;
             }
         }
