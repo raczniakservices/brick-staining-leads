@@ -485,7 +485,9 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
-            }).then(() => {
+            }).then(response => response.json()).then(data => {
+                // Store leadId for photo update
+                window.lastLeadId = data.leadId || formData.submittedAt;
                 // Show success immediately
                 formContent.classList.add('hide');
                 successMessage.classList.add('show');
@@ -497,7 +499,7 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
-            // Upload photos in background (non-blocking)
+            // Upload photos in background and update lead with photo URLs
             const photoFiles = document.getElementById('photos').files;
             if (photoFiles.length > 0) {
                 const photoFormData = new FormData();
@@ -505,10 +507,24 @@
                     photoFormData.append('photos', file);
                 });
                 
-                // Don't await - fire and forget
+                // Upload photos and update lead with photo data
                 fetch('/api/upload-photos', {
                     method: 'POST',
                     body: photoFormData
+                }).then(response => response.json()).then(data => {
+                    if (data.success) {
+                        // Update the lead with photo URLs/data using the stored leadId
+                        const leadId = window.lastLeadId || formData.submittedAt;
+                        fetch('/api/update-lead-photos', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                leadId: leadId,
+                                photos: data.photos || [],
+                                photoData: data.photoData || []
+                            })
+                        }).catch(() => {});
+                    }
                 }).catch(() => {
                     // Silently fail - form already submitted
                 });

@@ -220,9 +220,37 @@ app.post('/api/submit-lead', (req, res) => {
         if (lead.photoData && lead.photoData.length > 0) {
             console.log(`  - ${lead.photoData.length} photo(s) stored as base64`);
         }
-        res.json({ success: true });
+        res.json({ success: true, leadId: lead.id });
     } catch (error) {
         console.error('Error saving lead:', error);
+        res.status(500).json({ success: false });
+    }
+});
+
+// Update lead with photos after upload
+app.post('/api/update-lead-photos', (req, res) => {
+    try {
+        const { leadId, photos, photoData } = req.body;
+        const leads = getLeads();
+        const lead = leads.find(l => l.id == leadId || l.submittedAt == leadId);
+        
+        if (lead) {
+            if (photos && photos.length > 0) {
+                lead.photos = photos;
+                lead.hasPhotos = true;
+            }
+            if (photoData && photoData.length > 0) {
+                lead.photoData = photoData;
+                lead.hasPhotos = true;
+            }
+            fs.writeFileSync(DB_PATH, JSON.stringify(leads, null, 2));
+            console.log(`Updated lead ${leadId} with ${(photos?.length || 0) + (photoData?.length || 0)} photo(s)`);
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ success: false, error: 'Lead not found' });
+        }
+    } catch (error) {
+        console.error('Error updating lead photos:', error);
         res.status(500).json({ success: false });
     }
 });
