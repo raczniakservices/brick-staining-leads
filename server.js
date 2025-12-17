@@ -196,12 +196,11 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
             photoData: photoData // Base64 fallback
         };
         
-        // Return success even if photos failed (form already submitted)
-        if (photoUrls.length === 0 && files.length > 0) {
-            console.warn('Photo uploads failed, but form submission succeeded');
+        console.log(`Photo upload complete: ${photoUrls.length} Cloudinary URLs, ${photoData.length} base64 images`);
+        if (photoUrls.length === 0 && photoData.length === 0 && files.length > 0) {
+            console.warn('WARNING: All photo uploads failed!');
         }
 
-        console.log(`Photos: ${photoUrls.length} uploaded to Cloudinary, ${photoData.length} stored as base64`);
         res.json(response);
     } catch (error) {
         console.error('Error uploading photos:', error);
@@ -231,30 +230,41 @@ app.post('/api/submit-lead', (req, res) => {
 app.post('/api/update-lead-photos', (req, res) => {
     try {
         const { leadId, photos, photoData } = req.body;
-        const leads = getLeads();
-        // Try to find lead by id, submittedAt, or phone (most recent match)
-        let lead = leads.find(l => l.id == leadId || l.id == leadId || String(l.submittedAt) === String(leadId));
+        console.log(`Updating lead photos - leadId: ${leadId}, photos: ${photos?.length || 0}, photoData: ${photoData?.length || 0}`);
         
-        // If not found, get the most recently added lead
+        const leads = getLeads();
+        console.log(`Total leads in database: ${leads.length}`);
+        
+        // Try to find lead by id first
+        let lead = leads.find(l => l.id == leadId);
+        
+        // If not found by id, try submittedAt
+        if (!lead) {
+            lead = leads.find(l => String(l.submittedAt) === String(leadId));
+        }
+        
+        // If still not found, get the most recently added lead
         if (!lead && leads.length > 0) {
             lead = leads[leads.length - 1];
-            console.log(`Lead not found by ID, using most recent lead: ${lead.id}`);
+            console.log(`Lead not found by ID ${leadId}, using most recent lead: ${lead.id} (submitted: ${lead.submittedAt})`);
         }
         
         if (lead) {
             if (photos && photos.length > 0) {
                 lead.photos = (lead.photos || []).concat(photos);
                 lead.hasPhotos = true;
+                console.log(`Added ${photos.length} Cloudinary photo(s) to lead`);
             }
             if (photoData && photoData.length > 0) {
                 lead.photoData = (lead.photoData || []).concat(photoData);
                 lead.hasPhotos = true;
+                console.log(`Added ${photoData.length} base64 photo(s) to lead`);
             }
             fs.writeFileSync(DB_PATH, JSON.stringify(leads, null, 2));
-            console.log(`Updated lead ${lead.id} (${lead.name || lead.phone}) with ${(photos?.length || 0) + (photoData?.length || 0)} photo(s)`);
-            res.json({ success: true });
+            console.log(`✅ Successfully updated lead ${lead.id} (${lead.name || lead.phone}) - Total photos: ${(lead.photos?.length || 0) + (lead.photoData?.length || 0)}`);
+            res.json({ success: true, leadId: lead.id });
         } else {
-            console.error(`Lead not found for ID: ${leadId}`);
+            console.error(`❌ Lead not found for ID: ${leadId}. Available lead IDs: ${leads.map(l => l.id).join(', ')}`);
             res.status(404).json({ success: false, error: 'Lead not found' });
         }
     } catch (error) {
