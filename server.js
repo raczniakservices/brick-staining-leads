@@ -6,20 +6,21 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const app = express();
 
-// Cloudinary configuration
-if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+// Cloudinary configuration - use CLOUDINARY_URL if available (recommended), otherwise use individual vars
+if (process.env.CLOUDINARY_URL) {
+    // Use the full URL format (recommended by Cloudinary)
+    cloudinary.config();
+    console.log('Cloudinary configured using CLOUDINARY_URL');
+} else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    // Fallback to individual credentials
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
         api_key: process.env.CLOUDINARY_API_KEY,
         api_secret: process.env.CLOUDINARY_API_SECRET
     });
-    console.log('Cloudinary configured with cloud_name:', process.env.CLOUDINARY_CLOUD_NAME);
+    console.log('Cloudinary configured with individual credentials, cloud_name:', process.env.CLOUDINARY_CLOUD_NAME);
 } else {
-    console.warn('Cloudinary not fully configured. Missing:', {
-        cloud_name: !process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: !process.env.CLOUDINARY_API_KEY,
-        api_secret: !process.env.CLOUDINARY_API_SECRET
-    });
+    console.warn('Cloudinary not configured. Missing credentials.');
 }
 
 // Multer for file uploads (memory storage)
