@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leads | Preferred Brick Staining</title>
+    <title>Leads Dashboard | Preferred Brick Staining</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -14,6 +14,7 @@
 
         :root {
             --primary: #C45C26;
+            --primary-dark: #A34B1F;
             --bg: #0d0d0d;
             --card-bg: #1a1a1a;
             --text: #ffffff;
@@ -21,6 +22,8 @@
             --border: #333333;
             --success: #2E7D32;
             --warning: #E65100;
+            --info: #1976D2;
+            --danger: #D32F2F;
         }
 
         body {
@@ -51,9 +54,89 @@
             margin-top: 4px;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .filters {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 10px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 16px;
             margin-bottom: 32px;
         }
@@ -77,25 +160,6 @@
         .stat-value {
             font-size: 36px;
             font-weight: 700;
-        }
-
-        .refresh-btn {
-            padding: 10px 20px;
-            background: var(--primary);
-            border: none;
-            border-radius: 4px;
-            color: white;
-            font-family: inherit;
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .refresh-btn:hover {
-            background: #a34b1f;
         }
 
         .leads-table {
@@ -133,25 +197,30 @@
             background: rgba(255,255,255,0.02);
         }
 
-        .status {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 3px;
+        .status-select {
+            padding: 6px 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: inherit;
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: border-color 0.2s;
         }
 
-        .status-new {
-            background: rgba(46, 125, 50, 0.2);
-            color: #4CAF50;
+        .status-select:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
-        .status-contacted {
-            background: rgba(230, 81, 0, 0.2);
-            color: #FF9800;
-        }
+        .status-new { background: rgba(46, 125, 50, 0.2); color: #4CAF50; }
+        .status-contacted { background: rgba(230, 81, 0, 0.2); color: #FF9800; }
+        .status-quoted { background: rgba(25, 118, 210, 0.2); color: #42A5F5; }
+        .status-won { background: rgba(46, 125, 50, 0.3); color: #66BB6A; }
+        .status-lost { background: rgba(211, 47, 47, 0.2); color: #EF5350; }
 
         .contact-link {
             color: var(--primary);
@@ -183,24 +252,227 @@
             font-weight: 600;
         }
 
+        .view-details-btn {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-details-btn:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--primary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: var(--text);
+        }
+
+        .detail-row {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-card h2 {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .login-card input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .login-error {
+            color: var(--danger);
+            font-size: 12px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
+
         @media (max-width: 900px) {
             .leads-table {
                 overflow-x: auto;
             }
             
             table {
-                min-width: 700px;
+                min-width: 800px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <h2>Admin Login</h2>
+            <div class="login-error" id="loginError">Invalid password</div>
+            <input type="password" id="passwordInput" placeholder="Enter admin password" onkeypress="if(event.key==='Enter') login()">
+            <button class="btn btn-primary" style="width: 100%;" onclick="login()">Login</button>
+        </div>
+    </div>
+
+    <!-- Dashboard (hidden until logged in) -->
+    <div class="hidden" id="dashboard">
     <div class="header">
         <div class="header-left">
-            <h1>Leads</h1>
+            <h1>Leads Dashboard</h1>
             <p class="subtitle">Preferred Brick Staining Solutions</p>
         </div>
-        <button class="refresh-btn" onclick="loadLeads()">Refresh</button>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+            <button class="btn btn-primary" onclick="loadLeads()">Refresh</button>
+        </div>
+    </div>
+
+    <div class="filters">
+        <div class="filter-group">
+            <label>Search</label>
+            <input type="text" id="searchInput" placeholder="Name, phone, email..." oninput="filterLeads()">
+        </div>
+        <div class="filter-group">
+            <label>Status</label>
+            <select id="statusFilter" onchange="filterLeads()">
+                <option value="">All Statuses</option>
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="quoted">Quoted</option>
+                <option value="won">Won</option>
+                <option value="lost">Lost</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Service</label>
+            <select id="serviceFilter" onchange="filterLeads()">
+                <option value="">All Services</option>
+                <option value="brick-staining">Brick Staining</option>
+                <option value="block-staining">Block Staining</option>
+                <option value="mortar-staining">Mortar Staining</option>
+                <option value="stone-staining">Stone Staining</option>
+                <option value="historic-restoration">Historic Restoration</option>
+                <option value="paver-staining">Paver Staining</option>
+                <option value="precast-staining">Precast Staining</option>
+                <option value="graffiti-removal">Graffiti Removal</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Date Range</label>
+            <input type="date" id="dateFilter" onchange="filterLeads()">
+        </div>
     </div>
 
     <div class="stats">
@@ -216,6 +488,10 @@
             <div class="stat-label">Today</div>
             <div class="stat-value" id="todayLeads">0</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-label">Showing</div>
+            <div class="stat-value" id="showingLeads">0</div>
+        </div>
     </div>
 
     <div class="leads-table">
@@ -228,11 +504,12 @@
                     <th>Service</th>
                     <th>Property</th>
                     <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="leadsBody">
                 <tr>
-                    <td colspan="6" class="empty-state">
+                    <td colspan="7" class="empty-state">
                         <h3>No leads yet</h3>
                         <p>Leads will appear here when submitted</p>
                     </td>
@@ -241,7 +518,22 @@
         </table>
     </div>
 
+    <!-- Lead Details Modal -->
+    <div class="modal" id="leadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Lead Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="leadDetails"></div>
+        </div>
+    </div>
+    </div> <!-- End dashboard -->
+
     <script>
+        let allLeads = [];
+        let filteredLeads = [];
+
         const serviceNames = {
             'brick-staining': 'Brick Staining',
             'block-staining': 'Block Staining',
@@ -251,54 +543,86 @@
             'paver-staining': 'Paver Staining',
             'precast-staining': 'Precast Staining',
             'graffiti-removal': 'Graffiti Removal',
-            'not-sure': 'Needs Consultation',
-            'other': 'Other'
+            'not-sure': 'Needs Consultation'
         };
 
         const referralNames = {
-            'referral': 'Referral',
-            'neighbor': 'Saw Work',
-            'google': 'Google',
+            'referral': 'Friend/Family Referral',
+            'neighbor': 'Saw Our Work in the Neighborhood',
+            'google': 'Google Search',
             'facebook': 'Facebook',
-            'repeat': 'Repeat Customer',
+            'repeat': 'Previous Customer',
             'other': 'Other'
         };
 
-        async function loadLeads() {
-            try {
-                const response = await fetch('/api/leads');
-                const leads = await response.json();
+
+        function updateStats() {
+            document.getElementById('totalLeads').textContent = allLeads.length;
+            document.getElementById('newLeads').textContent = allLeads.filter(l => l.status === 'new').length;
+            
+            const today = new Date().toDateString();
+            document.getElementById('todayLeads').textContent = allLeads.filter(l => 
+                new Date(l.submittedAt).toDateString() === today
+            ).length;
+        }
+
+        function filterLeads() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const serviceFilter = document.getElementById('serviceFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+
+            filteredLeads = allLeads.filter(lead => {
+                const name = (lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || '').toLowerCase();
+                const phone = (lead.phone || '').toLowerCase();
+                const email = (lead.email || '').toLowerCase();
+                const address = (lead.address || '').toLowerCase();
                 
-                document.getElementById('totalLeads').textContent = leads.length;
-                document.getElementById('newLeads').textContent = leads.filter(l => l.status === 'new').length;
+                const matchesSearch = !search || 
+                    name.includes(search) || 
+                    phone.includes(search) || 
+                    email.includes(search) ||
+                    address.includes(search);
                 
-                const today = new Date().toDateString();
-                document.getElementById('todayLeads').textContent = leads.filter(l => 
-                    new Date(l.submittedAt).toDateString() === today
-                ).length;
+                const matchesStatus = !statusFilter || lead.status === statusFilter;
+                const matchesService = !serviceFilter || lead.service === serviceFilter;
                 
-                const tbody = document.getElementById('leadsBody');
-                
-                if (leads.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="empty-state">
-                                <h3>No leads yet</h3>
-                                <p>Leads will appear here when submitted</p>
-                            </td>
-                        </tr>
-                    `;
-                    return;
+                let matchesDate = true;
+                if (dateFilter) {
+                    const leadDate = new Date(lead.submittedAt).toISOString().split('T')[0];
+                    matchesDate = leadDate === dateFilter;
                 }
                 
-                leads.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+                return matchesSearch && matchesStatus && matchesService && matchesDate;
+            });
+
+            document.getElementById('showingLeads').textContent = filteredLeads.length;
+            renderLeads();
+        }
+
+        function renderLeads() {
+            const tbody = document.getElementById('leadsBody');
+            
+            if (filteredLeads.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <h3>No leads found</h3>
+                            <p>Try adjusting your filters</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            filteredLeads.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+            
+            tbody.innerHTML = filteredLeads.map(lead => {
+                const name = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+                const contactPref = lead.contactMethod ? `Prefers: ${lead.contactMethod}` : '';
+                const referral = referralNames[lead.referral] || lead.referral || '';
                 
-                tbody.innerHTML = leads.map(lead => {
-                    const name = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
-                    const contactPref = lead.contactMethod ? `Prefers: ${lead.contactMethod}` : '';
-                    const referral = referralNames[lead.referral] || lead.referral || '';
-                    
-                    return `
+                return `
                     <tr>
                         <td>
                             ${new Date(lead.submittedAt).toLocaleDateString()}
@@ -321,17 +645,209 @@
                             ${lead.propertyType ? lead.propertyType.charAt(0).toUpperCase() + lead.propertyType.slice(1) : 'N/A'}
                             ${lead.hasPhotos ? '<div class="lead-details">📷 Has photos</div>' : ''}
                         </td>
-                        <td><span class="status status-${lead.status}">${lead.status}</span></td>
+                        <td>
+                            <select class="status-select status-${lead.status}" onchange="updateStatus('${lead.id}', this.value)" value="${lead.status}">
+                                <option value="new" ${lead.status === 'new' ? 'selected' : ''}>New</option>
+                                <option value="contacted" ${lead.status === 'contacted' ? 'selected' : ''}>Contacted</option>
+                                <option value="quoted" ${lead.status === 'quoted' ? 'selected' : ''}>Quoted</option>
+                                <option value="won" ${lead.status === 'won' ? 'selected' : ''}>Won</option>
+                                <option value="lost" ${lead.status === 'lost' ? 'selected' : ''}>Lost</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="view-details-btn" onclick="viewLeadDetails('${lead.id}')">View</button>
+                        </td>
                     </tr>
-                `}).join('');
+                `;
+            }).join('');
+        }
+
+
+        function viewLeadDetails(leadId) {
+            const lead = allLeads.find(l => l.id == leadId);
+            if (!lead) return;
+
+            const name = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+            
+            document.getElementById('leadDetails').innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">Name</div>
+                    <div class="detail-value">${name}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Phone</div>
+                    <div class="detail-value"><a href="tel:${lead.phone}" class="contact-link">${lead.phone}</a></div>
+                </div>
+                ${lead.email ? `
+                <div class="detail-row">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value"><a href="mailto:${lead.email}" class="contact-link">${lead.email}</a></div>
+                </div>
+                ` : ''}
+                <div class="detail-row">
+                    <div class="detail-label">Property Address</div>
+                    <div class="detail-value">${lead.address || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Property Type</div>
+                    <div class="detail-value">${lead.propertyType ? lead.propertyType.charAt(0).toUpperCase() + lead.propertyType.slice(1) : 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Service Needed</div>
+                    <div class="detail-value">${serviceNames[lead.service] || lead.service || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Best Way to Reach</div>
+                    <div class="detail-value">${lead.contactMethod ? lead.contactMethod.charAt(0).toUpperCase() + lead.contactMethod.slice(1) : 'N/A'}</div>
+                </div>
+                ${lead.details ? `
+                <div class="detail-row">
+                    <div class="detail-label">Project Details</div>
+                    <div class="detail-value">${lead.details}</div>
+                </div>
+                ` : ''}
+                <div class="detail-row">
+                    <div class="detail-label">How They Heard About Us</div>
+                    <div class="detail-value">${referralNames[lead.referral] || lead.referral || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Submitted</div>
+                    <div class="detail-value">${new Date(lead.submittedAt).toLocaleString()}</div>
+                </div>
+            `;
+            
+            document.getElementById('leadModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('leadModal').classList.remove('active');
+        }
+
+        function exportCSV() {
+            const headers = ['Date', 'Name', 'Phone', 'Email', 'Address', 'Property Type', 'Service', 'Status', 'Referral Source'];
+            const rows = filteredLeads.map(lead => {
+                const name = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+                return [
+                    new Date(lead.submittedAt).toLocaleString(),
+                    name,
+                    lead.phone || '',
+                    lead.email || '',
+                    lead.address || '',
+                    lead.propertyType || '',
+                    serviceNames[lead.service] || lead.service || '',
+                    lead.status || '',
+                    referralNames[lead.referral] || lead.referral || ''
+                ];
+            });
+            
+            const csv = [headers, ...rows].map(row => 
+                row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+            ).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `leads-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Close modal on outside click
+        document.getElementById('leadModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Authentication
+        const ADMIN_PASSWORD = 'brick2024'; // Set via environment variable in production
+        let authPassword = localStorage.getItem('adminPassword');
+
+        function login() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === ADMIN_PASSWORD) {
+                authPassword = password;
+                localStorage.setItem('adminPassword', password);
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadLeads();
+            } else {
+                document.getElementById('loginError').classList.add('show');
+                document.getElementById('passwordInput').value = '';
+            }
+        }
+
+        function getAuthHeaders() {
+            return {
+                'X-Admin-Password': authPassword || ADMIN_PASSWORD
+            };
+        }
+
+        // Check if already logged in
+        if (authPassword === ADMIN_PASSWORD) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+        }
+
+        // Update API calls to include auth
+        async function loadLeads() {
+            try {
+                const response = await fetch('/api/leads', {
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.status === 401) {
+                    // Session expired, show login
+                    localStorage.removeItem('adminPassword');
+                    document.getElementById('loginScreen').classList.remove('hidden');
+                    document.getElementById('dashboard').classList.add('hidden');
+                    return;
+                }
+                
+                allLeads = await response.json();
+                updateStats();
+                filterLeads();
                 
             } catch (error) {
                 console.error('Error loading leads:', error);
             }
         }
 
-        loadLeads();
-        setInterval(loadLeads, 30000);
+        async function updateStatus(leadId, newStatus) {
+            try {
+                const response = await fetch(`/api/leads/${leadId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('adminPassword');
+                    document.getElementById('loginScreen').classList.remove('hidden');
+                    document.getElementById('dashboard').classList.add('hidden');
+                    return;
+                }
+                
+                if (response.ok) {
+                    const lead = allLeads.find(l => l.id == leadId);
+                    if (lead) lead.status = newStatus;
+                    updateStats();
+                    filterLeads();
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                alert('Failed to update status');
+            }
+        }
+
+        if (authPassword === ADMIN_PASSWORD) {
+            loadLeads();
+            setInterval(loadLeads, 30000); // Auto-refresh every 30 seconds
+        }
     </script>
 </body>
 </html>

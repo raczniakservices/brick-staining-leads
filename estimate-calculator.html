@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimate Calculator | Preferred Brick Staining</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #C45C26;
+            --primary-dark: #A34B1F;
+            --bg: #0d0d0d;
+            --card-bg: #1a1a1a;
+            --text: #ffffff;
+            --text-muted: #999999;
+            --border: #333333;
+            --success: #2E7D32;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .calculator-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 15px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+
+        .calculate-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .result-card {
+            background: rgba(46, 125, 50, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+            display: none;
+        }
+
+        .result-card.show {
+            display: block;
+        }
+
+        .result-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .result-breakdown {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .breakdown-label {
+            color: var(--text-muted);
+        }
+
+        .breakdown-value {
+            font-weight: 600;
+        }
+
+        .note {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(230, 81, 0, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Estimate Calculator</h1>
+            <p class="subtitle">Preferred Brick Staining Solutions</p>
+        </div>
+
+        <div class="calculator-card">
+            <form id="estimateForm">
+                <div class="form-group">
+                    <label for="service">Service Type</label>
+                    <select id="service" required>
+                        <option value="">Select a service</option>
+                        <option value="brick-staining">Brick Staining & Color Enhancement</option>
+                        <option value="block-staining">Block Staining & Architectural Correction</option>
+                        <option value="mortar-staining">Mortar Staining & Joint Blending</option>
+                        <option value="stone-staining">Stone Staining</option>
+                        <option value="historic-restoration">Historic Restoration</option>
+                        <option value="paver-staining">Paver Staining / Sealing</option>
+                        <option value="precast-staining">Precast Staining</option>
+                        <option value="graffiti-removal">Graffiti Removal / Restoration</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="squareFootage">Square Footage</label>
+                    <input type="number" id="squareFootage" placeholder="Enter square footage" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="propertyType">Property Type</label>
+                    <select id="propertyType" required>
+                        <option value="">Select</option>
+                        <option value="residential">Residential</option>
+                        <option value="commercial">Commercial</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="complexity">Project Complexity</label>
+                    <select id="complexity" required>
+                        <option value="standard">Standard</option>
+                        <option value="moderate">Moderate (some prep work needed)</option>
+                        <option value="complex">Complex (extensive prep/restoration)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="calculate-btn">Calculate Estimate</button>
+            </form>
+
+            <div class="result-card" id="resultCard">
+                <div class="result-label">Estimated Cost</div>
+                <div class="result-value" id="estimateValue">$0</div>
+                
+                <div class="result-breakdown" id="breakdown">
+                    <!-- Breakdown will be populated here -->
+                </div>
+            </div>
+
+            <div class="note">
+                <strong>Note:</strong> This is a rough estimate based on standard pricing. Final pricing may vary based on site conditions, accessibility, and specific project requirements. Contact us for a detailed quote.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pricing configuration - TO BE FILLED IN BY CLIENT
+        // These are placeholder values - update with actual pricing
+        const PRICING = {
+            'brick-staining': { base: 2.50, complexity: { standard: 1.0, moderate: 1.2, complex: 1.5 } },
+            'block-staining': { base: 2.75, complexity: { standard: 1.0, moderate: 1.2, complex: 1.5 } },
+            'mortar-staining': { base: 3.00, complexity: { standard: 1.0, moderate: 1.2, complex: 1.5 } },
+            'stone-staining': { base: 3.50, complexity: { standard: 1.0, moderate: 1.2, complex: 1.5 } },
+            'historic-restoration': { base: 4.00, complexity: { standard: 1.0, moderate: 1.3, complex: 1.8 } },
+            'paver-staining': { base: 2.25, complexity: { standard: 1.0, moderate: 1.15, complex: 1.4 } },
+            'precast-staining': { base: 2.50, complexity: { standard: 1.0, moderate: 1.2, complex: 1.5 } },
+            'graffiti-removal': { base: 3.50, complexity: { standard: 1.0, moderate: 1.3, complex: 1.7 } }
+        };
+
+        const MINIMUM_JOB = 500; // Minimum job cost
+        const COMMERCIAL_MULTIPLIER = 1.15; // Commercial projects cost 15% more
+
+        document.getElementById('estimateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const service = document.getElementById('service').value;
+            const squareFootage = parseFloat(document.getElementById('squareFootage').value);
+            const propertyType = document.getElementById('propertyType').value;
+            const complexity = document.getElementById('complexity').value;
+
+            if (!service || !squareFootage || !propertyType) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const pricing = PRICING[service];
+            if (!pricing) {
+                alert('Please select a service');
+                return;
+            }
+
+            // Calculate base cost
+            let baseCost = squareFootage * pricing.base;
+            
+            // Apply complexity multiplier
+            baseCost *= pricing.complexity[complexity];
+            
+            // Apply commercial multiplier
+            if (propertyType === 'commercial') {
+                baseCost *= COMMERCIAL_MULTIPLIER;
+            }
+            
+            // Apply minimum job cost
+            const finalCost = Math.max(baseCost, MINIMUM_JOB);
+
+            // Display result
+            document.getElementById('estimateValue').textContent = `$${finalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            
+            // Show breakdown
+            const breakdown = document.getElementById('breakdown');
+            breakdown.innerHTML = `
+                <div class="breakdown-row">
+                    <span class="breakdown-label">Base Cost (${squareFootage.toLocaleString()} sq ft × $${pricing.base.toFixed(2)})</span>
+                    <span class="breakdown-value">$${(squareFootage * pricing.base).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div class="breakdown-row">
+                    <span class="breakdown-label">Complexity Multiplier (${complexity})</span>
+                    <span class="breakdown-value">${(pricing.complexity[complexity] * 100).toFixed(0)}%</span>
+                </div>
+                ${propertyType === 'commercial' ? `
+                <div class="breakdown-row">
+                    <span class="breakdown-label">Commercial Multiplier</span>
+                    <span class="breakdown-value">${(COMMERCIAL_MULTIPLIER * 100).toFixed(0)}%</span>
+                </div>
+                ` : ''}
+                ${finalCost === MINIMUM_JOB ? `
+                <div class="breakdown-row">
+                    <span class="breakdown-label">Minimum Job Fee Applied</span>
+                    <span class="breakdown-value">—</span>
+                </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('resultCard').classList.add('show');
+        });
+    </script>
+</body>
+</html>
+

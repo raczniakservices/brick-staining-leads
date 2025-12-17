@@ -2,7 +2,22 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const twilio = require('twilio');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const app = express();
+
+// Cloudinary configuration
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+    api_key: process.env.CLOUDINARY_API_KEY || '',
+    api_secret: process.env.CLOUDINARY_API_SECRET || ''
+});
+
+// Multer for file uploads (memory storage)
+const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 // ===========================================
 // CONFIGURATION
@@ -75,10 +90,54 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Photo upload endpoint
+app.post('/api/upload-photos', upload.array('photos', 5), async (req, res) => {
+    try {
+        console.log('Photo upload request received, files:', req.files ? req.files.length : 0);
+        
+        if (!req.files || req.files.length === 0) {
+            console.log('No files in request');
+            return res.json({ success: true, photos: [] });
+        }
+
+        // Check if Cloudinary is configured
+        if (!process.env.CLOUDINARY_CLOUD_NAME) {
+            console.warn('Cloudinary not configured - photos will not be uploaded');
+            console.warn('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
+            return res.json({ success: true, photos: [] });
+        }
+        
+        console.log('Uploading', req.files.length, 'photo(s) to Cloudinary...');
+
+        const photoUrls = [];
+        for (const file of req.files) {
+            const result = await new Promise((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    { folder: 'brick-staining-leads', resource_type: 'auto' },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    }
+                );
+                uploadStream.end(file.buffer);
+            });
+            photoUrls.push(result.secure_url);
+            console.log('Photo uploaded successfully:', result.secure_url);
+        }
+
+        console.log('All photos uploaded. Total:', photoUrls.length);
+        res.json({ success: true, photos: photoUrls });
+    } catch (error) {
+        console.error('Error uploading photos:', error);
+        console.error('Error details:', error.message, error.stack);
+        res.status(500).json({ success: false, error: 'Failed to upload photos', details: error.message });
+    }
+});
+
 app.post('/api/submit-lead', (req, res) => {
     try {
         const lead = saveLead(req.body);
-        console.log(`New lead: ${lead.firstName} ${lead.lastName} - ${lead.phone}`);
+        console.log(`New lead: ${lead.name || `${lead.firstName} ${lead.lastName}`} - ${lead.phone}`);
         res.json({ success: true });
     } catch (error) {
         console.error('Error saving lead:', error);
@@ -86,8 +145,39 @@ app.post('/api/submit-lead', (req, res) => {
     }
 });
 
-app.get('/api/leads', (req, res) => {
+// Simple admin authentication
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'brick2024';
+
+function checkAuth(req, res, next) {
+    const password = req.headers['x-admin-password'] || req.query.password;
+    if (password === ADMIN_PASSWORD) {
+        next();
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+}
+
+app.get('/api/leads', checkAuth, (req, res) => {
     res.json(getLeads());
+});
+
+// Update lead status
+app.put('/api/leads/:id/status', checkAuth, (req, res) => {
+    try {
+        const leads = getLeads();
+        const lead = leads.find(l => l.id == req.params.id);
+        
+        if (!lead) {
+            return res.status(404).json({ success: false, error: 'Lead not found' });
+        }
+        
+        lead.status = req.body.status;
+        fs.writeFileSync(DB_PATH, JSON.stringify(leads, null, 2));
+        res.json({ success: true, lead });
+    } catch (error) {
+        console.error('Error updating lead status:', error);
+        res.status(500).json({ success: false, error: 'Failed to update status' });
+    }
 });
 
 // Twilio SMS webhook
@@ -175,6 +265,10 @@ We'll review your project and contact you within 24 hours.`;
 
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.get('/estimate', (req, res) => {
+    res.sendFile(path.join(__dirname, 'estimate-calculator.html'));
 });
 
 // ===========================================

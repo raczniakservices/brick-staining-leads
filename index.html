@@ -461,6 +461,32 @@
             btn.disabled = true;
             btn.textContent = 'Submitting...';
 
+            // Upload photos first if any
+            let photoUrls = [];
+            const photoFiles = document.getElementById('photos').files;
+            
+            if (photoFiles.length > 0) {
+                try {
+                    const photoFormData = new FormData();
+                    Array.from(photoFiles).forEach(file => {
+                        photoFormData.append('photos', file);
+                    });
+                    
+                    const photoResponse = await fetch('/api/upload-photos', {
+                        method: 'POST',
+                        body: photoFormData
+                    });
+                    
+                    const photoData = await photoResponse.json();
+                    if (photoData.success && photoData.photos) {
+                        photoUrls = photoData.photos;
+                    }
+                } catch (error) {
+                    console.error('Error uploading photos:', error);
+                    // Continue with submission even if photos fail
+                }
+            }
+
             const formData = {
                 name: document.getElementById('name').value,
                 phone: document.getElementById('phone').value,
@@ -471,7 +497,8 @@
                 service: document.getElementById('service').value,
                 details: document.getElementById('details').value,
                 referral: document.getElementById('referral').value,
-                hasPhotos: document.getElementById('photos').files.length > 0,
+                photos: photoUrls,
+                hasPhotos: photoUrls.length > 0,
                 submittedAt: new Date().toISOString()
             };
 
