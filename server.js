@@ -6,38 +6,21 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const app = express();
 
-// Cloudinary configuration - use CLOUDINARY_URL if available (recommended), otherwise use individual vars
+// Cloudinary configuration
+// The SDK automatically reads CLOUDINARY_URL from process.env
+// If not available, use individual credentials
 if (process.env.CLOUDINARY_URL) {
-    // Use the full URL format (recommended by Cloudinary)
-    // Parse the URL to extract credentials
-    const url = process.env.CLOUDINARY_URL;
-    const match = url.match(/cloudinary:\/\/(\d+):([^@]+)@(.+)/);
-    if (match) {
-        cloudinary.config({
-            cloud_name: match[3],
-            api_key: match[1],
-            api_secret: match[2]
-        });
-        console.log('Cloudinary configured using CLOUDINARY_URL, cloud_name:', match[3]);
-    } else {
-        console.error('Invalid CLOUDINARY_URL format');
-    }
+    // SDK automatically reads from CLOUDINARY_URL - no config needed
+    console.log('Cloudinary will use CLOUDINARY_URL from environment');
 } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-    // Fallback to individual credentials
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
         api_key: process.env.CLOUDINARY_API_KEY,
         api_secret: process.env.CLOUDINARY_API_SECRET
     });
-    console.log('Cloudinary configured with individual credentials, cloud_name:', process.env.CLOUDINARY_CLOUD_NAME);
+    console.log('Cloudinary configured with individual credentials');
 } else {
-    console.warn('Cloudinary not configured. Missing credentials.');
-    console.warn('Have CLOUDINARY_URL?', !!process.env.CLOUDINARY_URL);
-    console.warn('Have individual vars?', {
-        cloud_name: !!process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: !!process.env.CLOUDINARY_API_KEY,
-        api_secret: !!process.env.CLOUDINARY_API_SECRET
-    });
+    console.warn('Cloudinary not configured - photo uploads will be disabled');
 }
 
 // Multer for file uploads (memory storage)
@@ -139,12 +122,22 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
 
         const photoUrls = [];
         for (const file of files) {
+            // Use upload_stream with proper error handling
             const result = await new Promise((resolve, reject) => {
                 const uploadStream = cloudinary.uploader.upload_stream(
-                    { folder: 'brick-staining-leads', resource_type: 'auto' },
+                    { 
+                        folder: 'brick-staining-leads',
+                        resource_type: 'auto',
+                        use_filename: true,
+                        unique_filename: true
+                    },
                     (error, result) => {
-                        if (error) reject(error);
-                        else resolve(result);
+                        if (error) {
+                            console.error('Cloudinary upload error:', error);
+                            reject(error);
+                        } else {
+                            resolve(result);
+                        }
                     }
                 );
                 uploadStream.end(file.buffer);
