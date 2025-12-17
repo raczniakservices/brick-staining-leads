@@ -456,8 +456,12 @@
         // Form submission
         document.getElementById('leadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            console.log('Form submitted');
             
             const btn = document.getElementById('submitBtn');
+            const formContent = document.getElementById('formContent');
+            const successMessage = document.getElementById('successMessage');
+            
             btn.disabled = true;
             btn.textContent = 'Submitting...';
 
@@ -528,22 +532,26 @@
                 if (response.ok) {
                     const result = await response.json();
                     console.log('Lead submitted successfully:', result);
-                    document.getElementById('formContent').classList.add('hide');
-                    document.getElementById('successMessage').classList.add('show');
+                    formContent.classList.add('hide');
+                    successMessage.classList.add('show');
+                    // Scroll to top to show success message
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 } else {
                     const errorData = await response.json().catch(() => ({}));
                     console.error('Submission failed:', response.status, errorData);
                     // Still show success to user (lead might be saved)
-                    document.getElementById('formContent').classList.add('hide');
-                    document.getElementById('successMessage').classList.add('show');
+                    formContent.classList.add('hide');
+                    successMessage.classList.add('show');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             } catch (error) {
                 console.error('Error submitting form:', error);
                 // Show success anyway (lead might be saved)
-                document.getElementById('formContent').classList.add('hide');
-                document.getElementById('successMessage').classList.add('show');
+                formContent.classList.add('hide');
+                successMessage.classList.add('show');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } finally {
-                // Re-enable button
+                // Re-enable button (but form is hidden so user won't see it)
                 btn.disabled = false;
                 btn.textContent = 'Submit Request';
             }
