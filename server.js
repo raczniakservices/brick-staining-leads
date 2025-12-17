@@ -130,28 +130,25 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
 
         const photoUrls = [];
         for (const file of files) {
-            // Use upload_stream with proper error handling
-            const result = await new Promise((resolve, reject) => {
-                const uploadStream = cloudinary.uploader.upload_stream(
-                    { 
-                        folder: 'brick-staining-leads',
-                        resource_type: 'auto',
-                        use_filename: true,
-                        unique_filename: true
-                    },
-                    (error, result) => {
-                        if (error) {
-                            console.error('Cloudinary upload error:', error);
-                            reject(error);
-                        } else {
-                            resolve(result);
-                        }
-                    }
-                );
-                uploadStream.end(file.buffer);
-            });
-            photoUrls.push(result.secure_url);
-            console.log('Photo uploaded successfully:', result.secure_url);
+            // Convert buffer to data URI for upload
+            const base64 = file.buffer.toString('base64');
+            const dataUri = `data:${file.mimetype};base64,${base64}`;
+            
+            try {
+                const result = await cloudinary.uploader.upload(dataUri, {
+                    folder: 'brick-staining-leads',
+                    resource_type: 'auto',
+                    use_filename: true,
+                    unique_filename: true
+                });
+                photoUrls.push(result.secure_url);
+                console.log('Photo uploaded successfully:', result.secure_url);
+            } catch (error) {
+                console.error('Cloudinary upload error for file:', file.originalname);
+                console.error('Error:', error.message);
+                console.error('Error code:', error.http_code);
+                throw error;
+            }
         }
 
         console.log('All photos uploaded. Total:', photoUrls.length);
