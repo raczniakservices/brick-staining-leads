@@ -119,9 +119,8 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
         }
 
         // Check if Cloudinary is configured
-        if (!process.env.CLOUDINARY_CLOUD_NAME) {
+        if (!process.env.CLOUDINARY_URL && !process.env.CLOUDINARY_CLOUD_NAME) {
             console.warn('Cloudinary not configured - photos will not be uploaded');
-            console.warn('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
             return res.json({ success: true, photos: [] });
         }
         
