@@ -12,18 +12,26 @@ let cloudinaryConfigured = false;
 
 if (process.env.CLOUDINARY_URL) {
     // Parse CLOUDINARY_URL and configure explicitly
-    const url = process.env.CLOUDINARY_URL;
+    const url = process.env.CLOUDINARY_URL.trim(); // Remove any whitespace
     const match = url.match(/cloudinary:\/\/(\d+):([^@]+)@(.+)/);
     if (match) {
+        const apiKey = match[1].trim();
+        const apiSecret = match[2].trim();
+        const cloudName = match[3].trim();
+        
         cloudinary.config({
-            cloud_name: match[3],
-            api_key: match[1],
-            api_secret: match[2]
+            cloud_name: cloudName,
+            api_key: apiKey,
+            api_secret: apiSecret
         });
-        console.log('Cloudinary configured from CLOUDINARY_URL, cloud_name:', match[3]);
+        console.log('Cloudinary configured from CLOUDINARY_URL');
+        console.log('  cloud_name:', cloudName);
+        console.log('  api_key:', apiKey.substring(0, 5) + '...');
+        console.log('  api_secret length:', apiSecret.length);
         cloudinaryConfigured = true;
     } else {
-        console.error('Invalid CLOUDINARY_URL format:', url.substring(0, 50) + '...');
+        console.error('Invalid CLOUDINARY_URL format. Expected: cloudinary://API_KEY:API_SECRET@CLOUD_NAME');
+        console.error('Got:', url.substring(0, 30) + '...');
     }
 }
 
@@ -140,23 +148,37 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
 
         const photoUrls = [];
         for (const file of files) {
-            // Convert buffer to data URI for upload
-            const base64 = file.buffer.toString('base64');
-            const dataUri = `data:${file.mimetype};base64,${base64}`;
-            
             try {
-                const result = await cloudinary.uploader.upload(dataUri, {
-                    folder: 'brick-staining-leads',
-                    resource_type: 'auto',
-                    use_filename: true,
-                    unique_filename: true
+                // Use upload_stream which is more reliable for server-side uploads
+                const result = await new Promise((resolve, reject) => {
+                    const uploadStream = cloudinary.uploader.upload_stream(
+                        {
+                            folder: 'brick-staining-leads',
+                            resource_type: 'auto',
+                            use_filename: true,
+                            unique_filename: true,
+                            // Don't use signatures for server-side uploads
+                            overwrite: false
+                        },
+                        (error, result) => {
+                            if (error) {
+                                console.error('Cloudinary upload_stream error:', error);
+                                console.error('Error message:', error.message);
+                                console.error('Error http_code:', error.http_code);
+                                reject(error);
+                            } else {
+                                resolve(result);
+                            }
+                        }
+                    );
+                    uploadStream.end(file.buffer);
                 });
+                
                 photoUrls.push(result.secure_url);
                 console.log('Photo uploaded successfully:', result.secure_url);
             } catch (error) {
                 console.error('Cloudinary upload error for file:', file.originalname);
-                console.error('Error:', error.message);
-                console.error('Error code:', error.http_code);
+                console.error('Full error:', JSON.stringify(error, null, 2));
                 throw error;
             }
         }
