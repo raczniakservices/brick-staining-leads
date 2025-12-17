@@ -24,7 +24,7 @@ const CONFIG = {
         '+18663288123': {
             businessName: 'Preferred Brick Staining Solutions',
             businessPhone: '443-278-1451',
-            formUrl: CONFIG.BASE_URL,
+            formUrl: process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL || 'http://localhost:3000',
             slug: 'brick-staining' // for routing to specific forms/admin
         }
         // Add more clients like this:
