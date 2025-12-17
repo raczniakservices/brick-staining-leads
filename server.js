@@ -163,13 +163,11 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
         const photoUrls = [];
         for (const file of files) {
             try {
-                // Use upload_stream - most reliable method
+                // Try upload_stream with minimal options
                 const result = await new Promise((resolve, reject) => {
                     const uploadStream = cloudinary.uploader.upload_stream(
                         {
-                            folder: 'brick-staining-leads',
-                            resource_type: 'image',
-                            // Remove options that might cause signature issues
+                            folder: 'brick-staining-leads'
                         },
                         (error, result) => {
                             if (error) {
@@ -183,17 +181,22 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
                 });
                 
                 photoUrls.push(result.secure_url);
-                console.log('Photo uploaded:', result.secure_url);
+                console.log('Photo uploaded successfully:', result.secure_url);
             } catch (error) {
-                console.error('Photo upload failed:', file.originalname, error.message);
-                // Don't throw - continue with other photos
-                // Return partial success
+                console.error('Photo upload failed:', file.originalname);
+                console.error('Error:', error.message);
+                // Check if it's a signature error
+                if (error.http_code === 401) {
+                    console.error('SIGNATURE ERROR - API secret may be incorrect');
+                    console.error('Please verify API secret in Cloudinary console matches CLOUDINARY_URL');
+                }
+                // Continue - don't block form submission
             }
         }
         
-        // Return success even if some photos failed
+        // Return success even if photos failed (form already submitted)
         if (photoUrls.length === 0 && files.length > 0) {
-            console.warn('All photo uploads failed, but returning success to not block form submission');
+            console.warn('Photo uploads failed, but form submission succeeded');
         }
 
         console.log('All photos uploaded. Total:', photoUrls.length);
