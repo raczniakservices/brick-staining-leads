@@ -126,6 +126,20 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Test endpoint to verify Cloudinary credentials
+app.get('/api/test-cloudinary', (req, res) => {
+    const config = cloudinary.config();
+    res.json({
+        configured: !!config.cloud_name,
+        cloud_name: config.cloud_name || 'NOT SET',
+        api_key: config.api_key ? config.api_key.substring(0, 5) + '...' : 'NOT SET',
+        has_api_secret: !!config.api_secret,
+        api_secret_length: config.api_secret ? config.api_secret.length : 0,
+        env_url: process.env.CLOUDINARY_URL ? 'SET' : 'NOT SET',
+        env_cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'NOT SET'
+    });
+});
+
 // Photo upload endpoint - accept both 'photos' and 'photo' field names
 app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, { name: 'photo', maxCount: 5 }]), async (req, res) => {
     try {
