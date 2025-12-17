@@ -251,7 +251,16 @@
             'paver-staining': 'Paver Staining',
             'precast-staining': 'Precast Staining',
             'graffiti-removal': 'Graffiti Removal',
-            'consultation': 'Consultation',
+            'not-sure': 'Needs Consultation',
+            'other': 'Other'
+        };
+
+        const referralNames = {
+            'referral': 'Referral',
+            'neighbor': 'Saw Work',
+            'google': 'Google',
+            'facebook': 'Facebook',
+            'repeat': 'Repeat Customer',
             'other': 'Other'
         };
 
@@ -284,28 +293,37 @@
                 
                 leads.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
                 
-                tbody.innerHTML = leads.map(lead => `
+                tbody.innerHTML = leads.map(lead => {
+                    const name = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+                    const contactPref = lead.contactMethod ? `Prefers: ${lead.contactMethod}` : '';
+                    const referral = referralNames[lead.referral] || lead.referral || '';
+                    
+                    return `
                     <tr>
                         <td>
                             ${new Date(lead.submittedAt).toLocaleDateString()}
                             <div class="lead-details">${new Date(lead.submittedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                         </td>
                         <td>
-                            <span class="lead-name">${lead.firstName} ${lead.lastName}</span>
+                            <span class="lead-name">${name}</span>
                             <div class="lead-details">${lead.address || ''}</div>
                         </td>
                         <td>
                             <a href="tel:${lead.phone}" class="contact-link">${lead.phone}</a>
-                            <div class="lead-details"><a href="mailto:${lead.email}" class="contact-link">${lead.email}</a></div>
+                            <div class="lead-details">${contactPref}</div>
+                            ${lead.email ? `<div class="lead-details"><a href="mailto:${lead.email}" class="contact-link">${lead.email}</a></div>` : ''}
                         </td>
-                        <td>${serviceNames[lead.service] || lead.service || 'N/A'}</td>
+                        <td>
+                            ${serviceNames[lead.service] || lead.service || 'N/A'}
+                            ${referral ? `<div class="lead-details">Via: ${referral}</div>` : ''}
+                        </td>
                         <td>
                             ${lead.propertyType ? lead.propertyType.charAt(0).toUpperCase() + lead.propertyType.slice(1) : 'N/A'}
-                            ${lead.sqft ? `<div class="lead-details">${lead.sqft} sq ft</div>` : ''}
+                            ${lead.hasPhotos ? '<div class="lead-details">📷 Has photos</div>' : ''}
                         </td>
                         <td><span class="status status-${lead.status}">${lead.status}</span></td>
                     </tr>
-                `).join('');
+                `}).join('');
                 
             } catch (error) {
                 console.error('Error loading leads:', error);

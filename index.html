@@ -87,6 +87,13 @@
             letter-spacing: 0.5px;
         }
 
+        .optional {
+            font-weight: 400;
+            color: var(--text-muted);
+            text-transform: none;
+            font-size: 12px;
+        }
+
         input, select, textarea {
             width: 100%;
             padding: 14px 16px;
@@ -124,7 +131,7 @@
 
         textarea {
             resize: vertical;
-            min-height: 100px;
+            min-height: 80px;
         }
 
         .row {
@@ -164,6 +171,57 @@
             margin-top: 20px;
             color: var(--text-muted);
             font-size: 13px;
+        }
+
+        .phone-link {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .phone-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Photo Upload */
+        .photo-upload {
+            border: 2px dashed var(--border);
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .photo-upload:hover {
+            border-color: var(--primary);
+        }
+
+        .photo-upload input {
+            display: none;
+        }
+
+        .photo-upload-text {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .photo-upload-text span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .photo-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .photo-preview img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
         }
 
         /* Success State */
@@ -232,21 +290,15 @@
         <div class="header">
             <div class="company-name">Preferred Brick Staining Solutions</div>
             <h1>Get Your Free Quote</h1>
-            <p class="subtitle">Tell us about your project and we'll get back to you within 24 hours with a custom estimate.</p>
+            <p class="subtitle">Fill out this quick form and we'll get back to you within 24 hours.</p>
         </div>
 
         <div class="form-card">
             <div class="form-content" id="formContent">
                 <form id="leadForm">
-                    <div class="row">
-                        <div class="form-group">
-                            <label for="firstName">First Name</label>
-                            <input type="text" id="firstName" name="firstName" required placeholder="John">
-                        </div>
-                        <div class="form-group">
-                            <label for="lastName">Last Name</label>
-                            <input type="text" id="lastName" name="lastName" required placeholder="Smith">
-                        </div>
+                    <div class="form-group">
+                        <label for="name">Your Name</label>
+                        <input type="text" id="name" name="name" required placeholder="John Smith">
                     </div>
 
                     <div class="form-group">
@@ -255,8 +307,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" required placeholder="john@example.com">
+                        <label for="email">Email <span class="optional">(optional)</span></label>
+                        <input type="email" id="email" name="email" placeholder="john@example.com">
                     </div>
 
                     <div class="form-group">
@@ -274,8 +326,13 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="sqft">Est. Square Footage</label>
-                            <input type="text" id="sqft" name="sqft" placeholder="e.g., 2000">
+                            <label for="contactMethod">Best Way to Reach You</label>
+                            <select id="contactMethod" name="contactMethod" required>
+                                <option value="">Select</option>
+                                <option value="text">Text Message</option>
+                                <option value="call">Phone Call</option>
+                                <option value="email">Email</option>
+                            </select>
                         </div>
                     </div>
 
@@ -291,14 +348,35 @@
                             <option value="paver-staining">Paver Staining / Sealing</option>
                             <option value="precast-staining">Precast Staining</option>
                             <option value="graffiti-removal">Graffiti Removal / Restoration</option>
-                            <option value="consultation">Free Consultation</option>
-                            <option value="other">Other</option>
+                            <option value="not-sure">Not Sure - Need Consultation</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="details">Project Details</label>
-                        <textarea id="details" name="details" placeholder="Tell us about your project - what are you looking to achieve?"></textarea>
+                        <label for="details">Tell Us About Your Project <span class="optional">(optional)</span></label>
+                        <textarea id="details" name="details" placeholder="What are you looking to achieve? Any specific colors or concerns?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Photos of Your Project <span class="optional">(optional - helps with estimate)</span></label>
+                        <div class="photo-upload" id="photoUpload">
+                            <input type="file" id="photos" name="photos" multiple accept="image/*">
+                            <p class="photo-upload-text"><span>Tap to upload photos</span> or drag and drop</p>
+                            <div class="photo-preview" id="photoPreview"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="referral">How Did You Hear About Us?</label>
+                        <select id="referral" name="referral" required>
+                            <option value="">Select</option>
+                            <option value="referral">Friend / Family Referral</option>
+                            <option value="neighbor">Saw Our Work in the Neighborhood</option>
+                            <option value="google">Google Search</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="repeat">Previous Customer</option>
+                            <option value="other">Other</option>
+                        </select>
                     </div>
 
                     <button type="submit" class="submit-btn" id="submitBtn">
@@ -313,15 +391,17 @@
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                 </div>
-                <h2>Request Received</h2>
-                <p>Thank you for your interest. We'll review your project details and contact you within 24 hours with a custom quote.</p>
+                <h2>Request Received!</h2>
+                <p>Thank you! We'll review your project and contact you within 24 hours.</p>
+                <p style="margin-top: 16px; font-size: 14px;">Questions? Call us at <a href="tel:443-278-1451" class="phone-link">443-278-1451</a></p>
             </div>
         </div>
 
-        <p class="footer-note">Serving Maryland and surrounding areas</p>
+        <p class="footer-note">Serving Maryland and surrounding areas · <a href="tel:443-278-1451" class="phone-link">443-278-1451</a></p>
     </div>
 
     <script>
+        // Phone formatting
         document.getElementById('phone').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length >= 6) {
@@ -332,6 +412,48 @@
             e.target.value = value;
         });
 
+        // Photo upload handling
+        const photoUpload = document.getElementById('photoUpload');
+        const photoInput = document.getElementById('photos');
+        const photoPreview = document.getElementById('photoPreview');
+
+        photoUpload.addEventListener('click', () => photoInput.click());
+        
+        photoUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            photoUpload.style.borderColor = 'var(--primary)';
+        });
+
+        photoUpload.addEventListener('dragleave', () => {
+            photoUpload.style.borderColor = 'var(--border)';
+        });
+
+        photoUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            photoUpload.style.borderColor = 'var(--border)';
+            handleFiles(e.dataTransfer.files);
+        });
+
+        photoInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            photoPreview.innerHTML = '';
+            Array.from(files).slice(0, 5).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        photoPreview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Form submission
         document.getElementById('leadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -340,15 +462,16 @@
             btn.textContent = 'Submitting...';
 
             const formData = {
-                firstName: document.getElementById('firstName').value,
-                lastName: document.getElementById('lastName').value,
+                name: document.getElementById('name').value,
                 phone: document.getElementById('phone').value,
                 email: document.getElementById('email').value,
                 address: document.getElementById('address').value,
                 propertyType: document.getElementById('propertyType').value,
-                sqft: document.getElementById('sqft').value,
+                contactMethod: document.getElementById('contactMethod').value,
                 service: document.getElementById('service').value,
                 details: document.getElementById('details').value,
+                referral: document.getElementById('referral').value,
+                hasPhotos: document.getElementById('photos').files.length > 0,
                 submittedAt: new Date().toISOString()
             };
 
