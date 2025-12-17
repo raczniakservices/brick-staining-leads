@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leads | Preferred Brick Staining</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #C45C26;
+            --bg: #0d0d0d;
+            --card-bg: #1a1a1a;
+            --text: #ffffff;
+            --text-muted: #999999;
+            --border: #333333;
+            --success: #2E7D32;
+            --warning: #E65100;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-left .subtitle {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .refresh-btn {
+            padding: 10px 20px;
+            background: var(--primary);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #a34b1f;
+        }
+
+        .leads-table {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(0,0,0,0.3);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-new {
+            background: rgba(46, 125, 50, 0.2);
+            color: #4CAF50;
+        }
+
+        .status-contacted {
+            background: rgba(230, 81, 0, 0.2);
+            color: #FF9800;
+        }
+
+        .contact-link {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .contact-link:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state h3 {
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .lead-details {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .lead-name {
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+            .leads-table {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 700px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>Leads</h1>
+            <p class="subtitle">Preferred Brick Staining Solutions</p>
+        </div>
+        <button class="refresh-btn" onclick="loadLeads()">Refresh</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-label">Total Leads</div>
+            <div class="stat-value" id="totalLeads">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">New</div>
+            <div class="stat-value" id="newLeads">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Today</div>
+            <div class="stat-value" id="todayLeads">0</div>
+        </div>
+    </div>
+
+    <div class="leads-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Service</th>
+                    <th>Property</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="leadsBody">
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <h3>No leads yet</h3>
+                        <p>Leads will appear here when submitted</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const serviceNames = {
+            'brick-staining': 'Brick Staining',
+            'block-staining': 'Block Staining',
+            'mortar-staining': 'Mortar Staining',
+            'stone-staining': 'Stone Staining',
+            'historic-restoration': 'Historic Restoration',
+            'paver-staining': 'Paver Staining',
+            'precast-staining': 'Precast Staining',
+            'graffiti-removal': 'Graffiti Removal',
+            'consultation': 'Consultation',
+            'other': 'Other'
+        };
+
+        async function loadLeads() {
+            try {
+                const response = await fetch('/api/leads');
+                const leads = await response.json();
+                
+                document.getElementById('totalLeads').textContent = leads.length;
+                document.getElementById('newLeads').textContent = leads.filter(l => l.status === 'new').length;
+                
+                const today = new Date().toDateString();
+                document.getElementById('todayLeads').textContent = leads.filter(l => 
+                    new Date(l.submittedAt).toDateString() === today
+                ).length;
+                
+                const tbody = document.getElementById('leadsBody');
+                
+                if (leads.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <h3>No leads yet</h3>
+                                <p>Leads will appear here when submitted</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                leads.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+                
+                tbody.innerHTML = leads.map(lead => `
+                    <tr>
+                        <td>
+                            ${new Date(lead.submittedAt).toLocaleDateString()}
+                            <div class="lead-details">${new Date(lead.submittedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </td>
+                        <td>
+                            <span class="lead-name">${lead.firstName} ${lead.lastName}</span>
+                            <div class="lead-details">${lead.address || ''}</div>
+                        </td>
+                        <td>
+                            <a href="tel:${lead.phone}" class="contact-link">${lead.phone}</a>
+                            <div class="lead-details"><a href="mailto:${lead.email}" class="contact-link">${lead.email}</a></div>
+                        </td>
+                        <td>${serviceNames[lead.service] || lead.service || 'N/A'}</td>
+                        <td>
+                            ${lead.propertyType ? lead.propertyType.charAt(0).toUpperCase() + lead.propertyType.slice(1) : 'N/A'}
+                            ${lead.sqft ? `<div class="lead-details">${lead.sqft} sq ft</div>` : ''}
+                        </td>
+                        <td><span class="status status-${lead.status}">${lead.status}</span></td>
+                    </tr>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading leads:', error);
+            }
+        }
+
+        loadLeads();
+        setInterval(loadLeads, 30000);
+    </script>
+</body>
+</html>

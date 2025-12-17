@@ -1,0 +1,13 @@
+{
+  "name": "lead-capture-system",
+  "version": "1.0.0",
+  "description": "Automated lead capture system with SMS auto-reply",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+
