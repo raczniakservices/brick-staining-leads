@@ -24,7 +24,10 @@ if (process.env.CLOUDINARY_URL) {
             cloudinary.config({
                 cloud_name: cloudName,
                 api_key: apiKey,
-                api_secret: apiSecret
+                api_secret: apiSecret,
+                // Cloudinary is moving accounts to SHA-256-only signatures.
+                // Force SHA-256 to avoid "Invalid Signature" even with correct credentials.
+                signature_algorithm: 'sha256'
             });
             console.log('Cloudinary configured from CLOUDINARY_URL');
             console.log('  cloud_name:', cloudName);
@@ -45,7 +48,9 @@ if (!cloudinaryConfigured && process.env.CLOUDINARY_CLOUD_NAME && process.env.CL
     cloudinary.config({
         cloud_name: String(process.env.CLOUDINARY_CLOUD_NAME).trim(),
         api_key: String(process.env.CLOUDINARY_API_KEY).trim(),
-        api_secret: String(process.env.CLOUDINARY_API_SECRET).trim()
+        api_secret: String(process.env.CLOUDINARY_API_SECRET).trim(),
+        // Cloudinary is moving accounts to SHA-256-only signatures.
+        signature_algorithm: 'sha256'
     });
     console.log('Cloudinary configured with individual credentials, cloud_name:', String(process.env.CLOUDINARY_CLOUD_NAME).trim());
     cloudinaryConfigured = true;
@@ -547,7 +552,8 @@ app.get('/api/test-cloudinary', async (req, res) => {
             cloud_name: config.cloud_name,
             api_key: config.api_key ? config.api_key.substring(0, 5) + '...' : 'MISSING',
             api_secret_length: config.api_secret ? config.api_secret.length : 0,
-            api_secret_present: !!config.api_secret
+            api_secret_present: !!config.api_secret,
+            signature_algorithm: config.signature_algorithm || 'default'
         };
 
         // First try a cheap auth check (no upload).
