@@ -106,8 +106,10 @@ const CONFIG = {
 // ===========================================
 // MIDDLEWARE
 // ===========================================
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// NOTE: photo fallback uses base64 payloads which can exceed default 100kb limits.
+// Increase limits so /api/update-lead-photos can accept base64 photoData safely.
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(express.static(__dirname));
 
 // ===========================================
