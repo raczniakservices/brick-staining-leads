@@ -120,6 +120,14 @@ function saveLead(lead) {
     const leads = getLeads();
     lead.id = Date.now();
     lead.status = 'new';
+    lead.statusUpdatedAt = new Date().toISOString();
+    lead.closedAt = null;
+    lead.notes = lead.notes || '';
+    lead.nextFollowUpAt = lead.nextFollowUpAt || null;
+    lead.lastContactedAt = lead.lastContactedAt || null;
+    lead.quoteAmount = lead.quoteAmount || null;
+    lead.jobAmount = lead.jobAmount || null;
+    lead.lostReason = lead.lostReason || '';
     leads.push(lead);
     fs.writeFileSync(DB_PATH, JSON.stringify(leads, null, 2));
     return lead;
@@ -339,11 +347,68 @@ app.put('/api/leads/:id/status', checkAuth, (req, res) => {
         }
         
         lead.status = req.body.status;
+        lead.statusUpdatedAt = new Date().toISOString();
+        if (lead.status === 'won' || lead.status === 'lost') {
+            lead.closedAt = lead.closedAt || new Date().toISOString();
+        } else {
+            lead.closedAt = null;
+        }
         fs.writeFileSync(DB_PATH, JSON.stringify(leads, null, 2));
         res.json({ success: true, lead });
     } catch (error) {
         console.error('Error updating lead status:', error);
         res.status(500).json({ success: false, error: 'Failed to update status' });
+    }
+});
+
+// Update lead fields (notes, follow-up, amounts, etc.)
+app.put('/api/leads/:id', checkAuth, (req, res) => {
+    try {
+        const leads = getLeads();
+        const lead = leads.find(l => l.id == req.params.id);
+
+        if (!lead) {
+            return res.status(404).json({ success: false, error: 'Lead not found' });
+        }
+
+        const allowedFields = [
+            'status',
+            'notes',
+            'nextFollowUpAt',
+            'lastContactedAt',
+            'quoteAmount',
+            'jobAmount',
+            'lostReason'
+        ];
+
+        for (const field of allowedFields) {
+            if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+                lead[field] = req.body[field];
+            }
+        }
+
+        // Normalize + derived fields
+        if (typeof lead.notes !== 'string') lead.notes = String(lead.notes ?? '');
+        if (typeof lead.lostReason !== 'string') lead.lostReason = String(lead.lostReason ?? '');
+
+        if (lead.quoteAmount === '') lead.quoteAmount = null;
+        if (lead.jobAmount === '') lead.jobAmount = null;
+
+        // Keep statusUpdatedAt / closedAt consistent if status was updated here
+        if (Object.prototype.hasOwnProperty.call(req.body, 'status')) {
+            lead.statusUpdatedAt = new Date().toISOString();
+            if (lead.status === 'won' || lead.status === 'lost') {
+                lead.closedAt = lead.closedAt || new Date().toISOString();
+            } else {
+                lead.closedAt = null;
+            }
+        }
+
+        fs.writeFileSync(DB_PATH, JSON.stringify(leads, null, 2));
+        res.json({ success: true, lead });
+    } catch (error) {
+        console.error('Error updating lead:', error);
+        res.status(500).json({ success: false, error: 'Failed to update lead' });
     }
 });
 

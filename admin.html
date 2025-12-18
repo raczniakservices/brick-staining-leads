@@ -103,6 +103,73 @@
             gap: 16px;
         }
 
+        .quick-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .pill-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .pill-btn:hover {
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.03);
+        }
+
+        .pill-btn.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(196, 92, 38, 0.25);
+        }
+
+        .pill-count {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .checkbox-row {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .checkbox-row label {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
         .filter-group {
             display: flex;
             flex-direction: column;
@@ -167,6 +234,78 @@
             border: 1px solid var(--border);
             border-radius: 6px;
             overflow: hidden;
+        }
+
+        .due-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            color: var(--text-muted);
+        }
+
+        .due-badge.overdue {
+            border-color: rgba(211, 47, 47, 0.5);
+            background: rgba(211, 47, 47, 0.15);
+            color: #ffb4b4;
+        }
+
+        .due-badge.today {
+            border-color: rgba(230, 81, 0, 0.55);
+            background: rgba(230, 81, 0, 0.18);
+            color: #ffd1a6;
+        }
+
+        .note-preview {
+            max-width: 260px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .modal textarea,
+        .modal input[type="datetime-local"],
+        .modal input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .modal textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .modal .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 560px) {
+            .modal .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 16px;
         }
 
         table {
@@ -439,6 +578,30 @@
         </div>
     </div>
 
+    <div class="quick-filters" id="quickFilters">
+        <button class="pill-btn active" data-quick="open" onclick="setQuickFilter('open')">
+            Open <span class="pill-count" id="countOpen">0</span>
+        </button>
+        <button class="pill-btn" data-quick="new" onclick="setQuickFilter('new')">
+            New <span class="pill-count" id="countNew">0</span>
+        </button>
+        <button class="pill-btn" data-quick="contacted" onclick="setQuickFilter('contacted')">
+            Contacted <span class="pill-count" id="countContacted">0</span>
+        </button>
+        <button class="pill-btn" data-quick="quoted" onclick="setQuickFilter('quoted')">
+            Quoted <span class="pill-count" id="countQuoted">0</span>
+        </button>
+        <button class="pill-btn" data-quick="won" onclick="setQuickFilter('won')">
+            Won <span class="pill-count" id="countWon">0</span>
+        </button>
+        <button class="pill-btn" data-quick="lost" onclick="setQuickFilter('lost')">
+            Lost <span class="pill-count" id="countLost">0</span>
+        </button>
+        <button class="pill-btn" data-quick="overdue" onclick="setQuickFilter('overdue')">
+            Overdue <span class="pill-count" id="countOverdue">0</span>
+        </button>
+    </div>
+
     <div class="filters">
         <div class="filter-group">
             <label>Search</label>
@@ -472,6 +635,19 @@
         <div class="filter-group">
             <label>Date Range</label>
             <input type="date" id="dateFilter" onchange="filterLeads()">
+            <div class="checkbox-row">
+                <label><input type="checkbox" id="hideClosed" checked onchange="filterLeads()"> Hide closed</label>
+                <label><input type="checkbox" id="onlyPhotos" onchange="filterLeads()"> Only with photos</label>
+            </div>
+        </div>
+        <div class="filter-group">
+            <label>Sort</label>
+            <select id="sortBy" onchange="filterLeads()">
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="followup">Next Follow-up</option>
+                <option value="status">Status</option>
+            </select>
         </div>
     </div>
 
@@ -503,13 +679,14 @@
                     <th>Contact</th>
                     <th>Service</th>
                     <th>Property</th>
+                    <th>Next</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="leadsBody">
                 <tr>
-                    <td colspan="7" class="empty-state">
+                    <td colspan="8" class="empty-state">
                         <h3>No leads yet</h3>
                         <p>Leads will appear here when submitted</p>
                     </td>
@@ -533,6 +710,7 @@
     <script>
         let allLeads = [];
         let filteredLeads = [];
+        let quickFilter = 'open'; // open | new | contacted | quoted | won | lost | overdue
 
         const serviceNames = {
             'brick-staining': 'Brick Staining',
@@ -564,6 +742,63 @@
             document.getElementById('todayLeads').textContent = allLeads.filter(l => 
                 new Date(l.submittedAt).toDateString() === today
             ).length;
+
+            const counts = {
+                open: allLeads.filter(l => !['won', 'lost'].includes(l.status)).length,
+                new: allLeads.filter(l => l.status === 'new').length,
+                contacted: allLeads.filter(l => l.status === 'contacted').length,
+                quoted: allLeads.filter(l => l.status === 'quoted').length,
+                won: allLeads.filter(l => l.status === 'won').length,
+                lost: allLeads.filter(l => l.status === 'lost').length,
+                overdue: allLeads.filter(l => isOverdue(l)).length
+            };
+
+            document.getElementById('countOpen').textContent = counts.open;
+            document.getElementById('countNew').textContent = counts.new;
+            document.getElementById('countContacted').textContent = counts.contacted;
+            document.getElementById('countQuoted').textContent = counts.quoted;
+            document.getElementById('countWon').textContent = counts.won;
+            document.getElementById('countLost').textContent = counts.lost;
+            document.getElementById('countOverdue').textContent = counts.overdue;
+        }
+
+        function setQuickFilter(value) {
+            quickFilter = value;
+            document.querySelectorAll('.pill-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.quick === value);
+            });
+            // Sync status dropdown for clarity
+            const statusSelect = document.getElementById('statusFilter');
+            if (['new', 'contacted', 'quoted', 'won', 'lost'].includes(value)) {
+                statusSelect.value = value;
+            } else {
+                statusSelect.value = '';
+            }
+            filterLeads();
+        }
+
+        function isOverdue(lead) {
+            if (!lead || !lead.nextFollowUpAt) return false;
+            if (lead.status === 'won' || lead.status === 'lost') return false;
+            const t = new Date(lead.nextFollowUpAt).getTime();
+            if (Number.isNaN(t)) return false;
+            return t < Date.now();
+        }
+
+        function formatNextFollowup(lead) {
+            if (!lead.nextFollowUpAt) return `<span class="due-badge">—</span>`;
+            const dt = new Date(lead.nextFollowUpAt);
+            if (Number.isNaN(dt.getTime())) return `<span class="due-badge">—</span>`;
+
+            const now = new Date();
+            const sameDay =
+                dt.getFullYear() === now.getFullYear() &&
+                dt.getMonth() === now.getMonth() &&
+                dt.getDate() === now.getDate();
+
+            const badgeClass = isOverdue(lead) ? 'overdue' : sameDay ? 'today' : '';
+            const label = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `<span class="due-badge ${badgeClass}">${badgeClass === 'overdue' ? 'Overdue:' : sameDay ? 'Today:' : 'Due:'} ${label}</span>`;
         }
 
         function filterLeads() {
@@ -571,6 +806,9 @@
             const statusFilter = document.getElementById('statusFilter').value;
             const serviceFilter = document.getElementById('serviceFilter').value;
             const dateFilter = document.getElementById('dateFilter').value;
+            const hideClosed = document.getElementById('hideClosed').checked;
+            const onlyPhotos = document.getElementById('onlyPhotos').checked;
+            const sortBy = document.getElementById('sortBy').value;
 
             filteredLeads = allLeads.filter(lead => {
                 const name = (lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || '').toLowerCase();
@@ -586,6 +824,13 @@
                 
                 const matchesStatus = !statusFilter || lead.status === statusFilter;
                 const matchesService = !serviceFilter || lead.service === serviceFilter;
+                const matchesClosed = !hideClosed || !['won', 'lost'].includes(lead.status);
+                const matchesPhotos = !onlyPhotos || !!lead.hasPhotos || (lead.photos && lead.photos.length) || (lead.photoData && lead.photoData.length);
+
+                let matchesQuick = true;
+                if (quickFilter === 'open') matchesQuick = !['won', 'lost'].includes(lead.status);
+                if (['new', 'contacted', 'quoted', 'won', 'lost'].includes(quickFilter)) matchesQuick = lead.status === quickFilter;
+                if (quickFilter === 'overdue') matchesQuick = isOverdue(lead);
                 
                 let matchesDate = true;
                 if (dateFilter) {
@@ -593,20 +838,20 @@
                     matchesDate = leadDate === dateFilter;
                 }
                 
-                return matchesSearch && matchesStatus && matchesService && matchesDate;
+                return matchesSearch && matchesStatus && matchesService && matchesClosed && matchesPhotos && matchesQuick && matchesDate;
             });
 
             document.getElementById('showingLeads').textContent = filteredLeads.length;
-            renderLeads();
+            renderLeads(sortBy);
         }
 
-        function renderLeads() {
+        function renderLeads(sortBy = 'newest') {
             const tbody = document.getElementById('leadsBody');
             
             if (filteredLeads.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="empty-state">
+                        <td colspan="8" class="empty-state">
                             <h3>No leads found</h3>
                             <p>Try adjusting your filters</p>
                         </td>
@@ -614,13 +859,28 @@
                 `;
                 return;
             }
-            
-            filteredLeads.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+
+            if (sortBy === 'oldest') {
+                filteredLeads.sort((a, b) => new Date(a.submittedAt) - new Date(b.submittedAt));
+            } else if (sortBy === 'followup') {
+                filteredLeads.sort((a, b) => {
+                    const ta = a.nextFollowUpAt ? new Date(a.nextFollowUpAt).getTime() : Infinity;
+                    const tb = b.nextFollowUpAt ? new Date(b.nextFollowUpAt).getTime() : Infinity;
+                    if (ta !== tb) return ta - tb;
+                    return new Date(b.submittedAt) - new Date(a.submittedAt);
+                });
+            } else if (sortBy === 'status') {
+                const order = { new: 1, contacted: 2, quoted: 3, won: 4, lost: 5 };
+                filteredLeads.sort((a, b) => (order[a.status] || 99) - (order[b.status] || 99) || (new Date(b.submittedAt) - new Date(a.submittedAt)));
+            } else {
+                filteredLeads.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+            }
             
             tbody.innerHTML = filteredLeads.map(lead => {
                 const name = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
                 const contactPref = lead.contactMethod ? `Prefers: ${lead.contactMethod}` : '';
                 const referral = referralNames[lead.referral] || lead.referral || '';
+                const notesPreview = lead.notes ? `<div class="note-preview">${String(lead.notes)}</div>` : '';
                 
                 return `
                     <tr>
@@ -631,6 +891,7 @@
                         <td>
                             <span class="lead-name">${name}</span>
                             <div class="lead-details">${lead.address || ''}</div>
+                            ${notesPreview}
                         </td>
                         <td>
                             <a href="tel:${lead.phone}" class="contact-link">${lead.phone}</a>
@@ -644,6 +905,9 @@
                         <td>
                             ${lead.propertyType ? lead.propertyType.charAt(0).toUpperCase() + lead.propertyType.slice(1) : 'N/A'}
                             ${lead.hasPhotos ? '<div class="lead-details">📷 Has photos</div>' : ''}
+                        </td>
+                        <td>
+                            ${formatNextFollowup(lead)}
                         </td>
                         <td>
                             <select class="status-select status-${lead.status}" onchange="updateStatus('${lead.id}', this.value)" value="${lead.status}">
@@ -713,6 +977,44 @@
                 <div class="detail-row">
                     <div class="detail-label">Submitted</div>
                     <div class="detail-value">${new Date(lead.submittedAt).toLocaleString()}</div>
+                </div>
+
+                <div class="detail-row" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+                    <div class="detail-label">Internal Tracking</div>
+                    <div class="detail-value">
+                        <div class="grid-2" style="margin-top: 10px;">
+                            <div>
+                                <div class="detail-label">Next Follow-up</div>
+                                <input type="datetime-local" id="editNextFollowUp" value="${lead.nextFollowUpAt ? new Date(lead.nextFollowUpAt).toISOString().slice(0,16) : ''}">
+                            </div>
+                            <div>
+                                <div class="detail-label">Last Contacted</div>
+                                <input type="datetime-local" id="editLastContacted" value="${lead.lastContactedAt ? new Date(lead.lastContactedAt).toISOString().slice(0,16) : ''}">
+                            </div>
+                        </div>
+                        <div class="grid-2" style="margin-top: 12px;">
+                            <div>
+                                <div class="detail-label">Quote Amount (optional)</div>
+                                <input type="number" inputmode="decimal" id="editQuoteAmount" placeholder="0" value="${lead.quoteAmount ?? ''}">
+                            </div>
+                            <div>
+                                <div class="detail-label">Job Amount (optional)</div>
+                                <input type="number" inputmode="decimal" id="editJobAmount" placeholder="0" value="${lead.jobAmount ?? ''}">
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <div class="detail-label">Notes</div>
+                            <textarea id="editNotes" placeholder="Notes, pricing, follow-up details...">${lead.notes ? String(lead.notes).replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''}</textarea>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <div class="detail-label">Lost Reason (only if Lost)</div>
+                            <input type="text" id="editLostReason" placeholder="Too expensive, no response, went with competitor..." value="${lead.lostReason ? String(lead.lostReason).replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''}">
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                            <button class="btn btn-primary" onclick="saveLeadEdits('${lead.id}')">Save</button>
+                        </div>
+                    </div>
                 </div>
                 ${(lead.photos && lead.photos.length > 0) || (lead.photoData && lead.photoData.length > 0) ? `
                 <div class="detail-row" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
@@ -858,6 +1160,49 @@
             } catch (error) {
                 console.error('Error updating status:', error);
                 alert('Failed to update status');
+            }
+        }
+
+        async function saveLeadEdits(leadId) {
+            const payload = {
+                notes: document.getElementById('editNotes')?.value || '',
+                nextFollowUpAt: document.getElementById('editNextFollowUp')?.value ? new Date(document.getElementById('editNextFollowUp').value).toISOString() : null,
+                lastContactedAt: document.getElementById('editLastContacted')?.value ? new Date(document.getElementById('editLastContacted').value).toISOString() : null,
+                quoteAmount: document.getElementById('editQuoteAmount')?.value || null,
+                jobAmount: document.getElementById('editJobAmount')?.value || null,
+                lostReason: document.getElementById('editLostReason')?.value || ''
+            };
+
+            try {
+                const response = await fetch(`/api/leads/${leadId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('adminPassword');
+                    document.getElementById('loginScreen').classList.remove('hidden');
+                    document.getElementById('dashboard').classList.add('hidden');
+                    return;
+                }
+
+                if (!response.ok) throw new Error('Failed to save');
+
+                const data = await response.json();
+                const updated = data.lead;
+                const idx = allLeads.findIndex(l => l.id == leadId);
+                if (idx >= 0) allLeads[idx] = updated;
+
+                updateStats();
+                filterLeads();
+                closeModal();
+            } catch (e) {
+                console.error('Error saving lead edits:', e);
+                alert('Failed to save lead edits');
             }
         }
 
