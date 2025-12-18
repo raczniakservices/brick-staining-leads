@@ -7,21 +7,22 @@ The `CLOUDINARY_URL` in Render is **missing the `@` symbol** between the API sec
 
 **Current (WRONG):**
 ```
-cloudinary://353371584266971:CKU0JRA3UuxImS3IH3_RfWxizXYadkehwnraf
+cloudinary://[API_KEY]:[API_SECRET][CLOUD_NAME]
 ```
+(Missing `@` between secret and cloud name)
 
 **Should be (CORRECT):**
 ```
-cloudinary://353371584266971:CKU0JRA3UuxImS3IH3_RfWxizXY@dkehwnraf
+cloudinary://[API_KEY]:[API_SECRET]@[CLOUD_NAME]
 ```
-(Notice the `@` between `XY` and `dkehwnraf`)
+(Notice the `@` between secret and cloud name)
 
 ### Render Environment Variables (Current)
 1. `ADMIN_PASSWORD` = `brick2024`
 2. `CLOUDINARY_UNSIGNED_UPLOAD_PRESET` = `Lead Uploads` ✅ (correctly set)
-3. `CLOUDINARY_URL` = `cloudinary://353371584266971:CKU0JRA3UuxImS3IH3_RfWxizXYadkehwnraf` ❌ (missing `@`)
-4. `TWILIO_ACCOUNT_SID` = `AC1950591060126a183979b3e5ca35b8e5`
-5. `TWILIO_AUTH_TOKEN` = `d2b51d29057f20b4164b407d595fdd0d`
+3. `CLOUDINARY_URL` = `cloudinary://[API_KEY]:[API_SECRET]@[CLOUD_NAME]` ❌ (missing `@` between secret and cloud name)
+4. `TWILIO_ACCOUNT_SID` = (set in Render)
+5. `TWILIO_AUTH_TOKEN` = (set in Render)
 
 ### Cloudinary Setup (Completed)
 - ✅ Created unsigned upload preset: `Lead Uploads`
@@ -33,7 +34,8 @@ cloudinary://353371584266971:CKU0JRA3UuxImS3IH3_RfWxizXY@dkehwnraf
 1. **Fix CLOUDINARY_URL in Render:**
    - Go to Render → Environment tab
    - Edit `CLOUDINARY_URL`
-   - Change to: `cloudinary://353371584266971:CKU0JRA3UuxImS3IH3_RfWxizXY@dkehwnraf`
+   - **Add `@` symbol** between the API secret and cloud name
+   - Format should be: `cloudinary://[API_KEY]:[API_SECRET]@[CLOUD_NAME]`
    - Click "Save, rebuild, and deploy"
 
 2. **Test the fix:**
