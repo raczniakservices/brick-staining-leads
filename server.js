@@ -223,7 +223,11 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
                 photoUrls.push(result.secure_url);
                 console.log('Photo uploaded to Cloudinary:', result.secure_url);
             } catch (error) {
-                console.warn('Cloudinary upload failed, storing as base64:', file.originalname);
+                console.error('❌ Cloudinary upload FAILED for:', file.originalname);
+                console.error('Error type:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error details:', error.http_code, error.error?.message);
+                console.warn('Falling back to base64 storage');
                 // Fallback: store as base64 data URI
                 const base64 = file.buffer.toString('base64');
                 const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64}`;
