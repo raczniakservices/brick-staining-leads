@@ -247,64 +247,61 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
         
         console.log('Uploading', files.length, 'photo(s) to Cloudinary...');
         
+        // Check if unsigned preset is configured - use it FIRST (bypasses signature issues)
+        const unsignedPreset = process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET
+            ? String(process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET).trim()
+            : '';
+        const cloudName = cloudinary.config().cloud_name;
+        
+        console.log('Upload config - cloudName:', cloudName, 'unsignedPreset:', unsignedPreset || 'NOT SET');
+        
         for (const file of files) {
-            try {
-                // Try Cloudinary upload
-                const base64 = file.buffer.toString('base64');
-                const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64}`;
-                
-                const result = await cloudinary.uploader.upload(dataUri, {
-                    folder: 'brick-staining-leads',
-                    resource_type: 'image'
-                });
-                
-                photoUrls.push(result.secure_url);
-                console.log('Photo uploaded to Cloudinary:', result.secure_url);
-            } catch (error) {
-                console.error('❌ Cloudinary upload FAILED for:', file.originalname);
-                console.error('Error type:', error.name);
-                console.error('Error message:', error.message);
-                console.error('Error details:', error.http_code, error.error?.message);
-
-                // If signed auth is broken, try UNSIGNED preset upload (no API secret/signature).
-                const unsignedPreset = process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET
-                    ? String(process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET).trim()
-                    : '';
-                const cloudName = cloudinary.config().cloud_name;
-                const base64 = file.buffer.toString('base64');
-                const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64}`;
-
-                const isSignatureAuthIssue =
-                    error?.http_code === 401 ||
-                    (typeof error?.message === 'string' && error.message.toLowerCase().includes('invalid signature')) ||
-                    (typeof error?.error?.message === 'string' && error.error.message.toLowerCase().includes('invalid signature'));
-
-                if (unsignedPreset && cloudName && isSignatureAuthIssue) {
-                    try {
-                        console.warn('Trying Cloudinary UNSIGNED preset upload...');
-                        const unsignedRes = await cloudinaryUnsignedUpload({
-                            cloudName,
-                            uploadPreset: unsignedPreset,
-                            dataUri,
-                            folder: 'brick-staining-leads'
-                        });
-                        photoUrls.push(unsignedRes.secure_url);
-                        console.log('Photo uploaded to Cloudinary (unsigned):', unsignedRes.secure_url);
-                        continue;
-                    } catch (unsignedErr) {
-                        console.error('❌ Unsigned Cloudinary upload failed:', unsignedErr.message);
-                        console.error('Unsigned error details:', unsignedErr.http_code, unsignedErr.error?.message);
-                    }
+            const base64 = file.buffer.toString('base64');
+            const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64}`;
+            
+            // If unsigned preset is configured, use it directly (most reliable)
+            if (unsignedPreset && cloudName) {
+                try {
+                    console.log('Using UNSIGNED upload for:', file.originalname);
+                    const unsignedRes = await cloudinaryUnsignedUpload({
+                        cloudName,
+                        uploadPreset: unsignedPreset,
+                        dataUri,
+                        folder: 'brick-staining-leads'
+                    });
+                    photoUrls.push(unsignedRes.secure_url);
+                    console.log('✅ Photo uploaded to Cloudinary (unsigned):', unsignedRes.secure_url);
+                    continue;
+                } catch (unsignedErr) {
+                    console.error('❌ Unsigned upload failed for:', file.originalname);
+                    console.error('Error:', unsignedErr.message);
+                    // Fall through to base64
                 }
-
-                console.warn('Falling back to base64 storage');
-                // Fallback: store as base64 data URI
-                photoData.push({
-                    name: file.originalname,
-                    data: dataUri,
-                    size: file.size
-                });
+            } else {
+                // Try signed upload if no unsigned preset
+                try {
+                    console.log('Using SIGNED upload for:', file.originalname);
+                    const result = await cloudinary.uploader.upload(dataUri, {
+                        folder: 'brick-staining-leads',
+                        resource_type: 'image'
+                    });
+                    photoUrls.push(result.secure_url);
+                    console.log('✅ Photo uploaded to Cloudinary (signed):', result.secure_url);
+                    continue;
+                } catch (error) {
+                    console.error('❌ Signed upload failed for:', file.originalname);
+                    console.error('Error:', error.message);
+                    // Fall through to base64
+                }
             }
+            
+            // Fallback: store as base64
+            console.warn('⚠️ Falling back to base64 storage for:', file.originalname);
+            photoData.push({
+                name: file.originalname,
+                data: dataUri,
+                size: file.size
+            });
         }
         
         // Return both Cloudinary URLs and base64 fallbacks
