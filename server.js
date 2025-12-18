@@ -11,27 +11,33 @@ const app = express();
 let cloudinaryConfigured = false;
 
 if (process.env.CLOUDINARY_URL) {
-    // Parse CLOUDINARY_URL and configure explicitly
-    const url = process.env.CLOUDINARY_URL.trim(); // Remove any whitespace
-    const match = url.match(/cloudinary:\/\/(\d+):([^@]+)@(.+)/);
-    if (match) {
-        const apiKey = match[1].trim();
-        const apiSecret = match[2].trim();
-        const cloudName = match[3].trim();
-        
-        cloudinary.config({
-            cloud_name: cloudName,
-            api_key: apiKey,
-            api_secret: apiSecret
-        });
-        console.log('Cloudinary configured from CLOUDINARY_URL');
-        console.log('  cloud_name:', cloudName);
-        console.log('  api_key:', apiKey.substring(0, 5) + '...');
-        console.log('  api_secret length:', apiSecret.length);
-        cloudinaryConfigured = true;
-    } else {
-        console.error('Invalid CLOUDINARY_URL format. Expected: cloudinary://API_KEY:API_SECRET@CLOUD_NAME');
-        console.error('Got:', url.substring(0, 30) + '...');
+    // Parse CLOUDINARY_URL robustly and configure explicitly
+    const rawUrl = process.env.CLOUDINARY_URL.trim(); // Remove any whitespace
+    try {
+        const u = new URL(rawUrl);
+        // Expected: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+        if (u.protocol === 'cloudinary:' && u.username && u.password && u.hostname) {
+            const apiKey = u.username.trim();
+            const apiSecret = decodeURIComponent(u.password).trim();
+            const cloudName = u.hostname.trim();
+
+            cloudinary.config({
+                cloud_name: cloudName,
+                api_key: apiKey,
+                api_secret: apiSecret
+            });
+            console.log('Cloudinary configured from CLOUDINARY_URL');
+            console.log('  cloud_name:', cloudName);
+            console.log('  api_key:', apiKey.substring(0, 5) + '...');
+            console.log('  api_secret length:', apiSecret.length);
+            cloudinaryConfigured = true;
+        } else {
+            console.error('Invalid CLOUDINARY_URL format. Expected: cloudinary://API_KEY:API_SECRET@CLOUD_NAME');
+            console.error('Got:', rawUrl.substring(0, 30) + '...');
+        }
+    } catch (e) {
+        console.error('Invalid CLOUDINARY_URL (failed to parse)');
+        console.error('Got:', rawUrl.substring(0, 30) + '...');
     }
 }
 
@@ -177,19 +183,29 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
         
         if (!files || files.length === 0) {
             console.log('No files in request');
-            return res.json({ success: true, photos: [] });
+            return res.json({ success: true, photos: [], photoData: [] });
         }
 
-        // Check if Cloudinary is configured
-        if (!process.env.CLOUDINARY_URL && !process.env.CLOUDINARY_CLOUD_NAME) {
-            console.warn('Cloudinary not configured - photos will not be uploaded');
-            return res.json({ success: true, photos: [] });
+        const photoUrls = [];
+        const photoData = []; // Fallback: store as base64 if Cloudinary fails or isn't configured
+
+        // If Cloudinary isn't configured, store as base64 so photos still persist
+        if (!cloudinaryConfigured) {
+            console.warn('Cloudinary not configured - storing photos as base64 fallback');
+            for (const file of files) {
+                const base64 = file.buffer.toString('base64');
+                const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64}`;
+                photoData.push({
+                    name: file.originalname,
+                    data: dataUri,
+                    size: file.size
+                });
+            }
+            console.log(`Photo upload complete (fallback): 0 Cloudinary URLs, ${photoData.length} base64 images`);
+            return res.json({ success: true, photos: photoUrls, photoData });
         }
         
         console.log('Uploading', files.length, 'photo(s) to Cloudinary...');
-
-        const photoUrls = [];
-        const photoData = []; // Fallback: store as base64 if Cloudinary fails
         
         for (const file of files) {
             try {
