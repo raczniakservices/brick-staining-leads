@@ -133,6 +133,19 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Public platform pages (used for A2P registration / compliance)
+app.get('/platform.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'platform.html'));
+});
+
+app.get('/privacy.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'privacy.html'));
+});
+
+app.get('/terms.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'terms.html'));
+});
+
 // Test endpoint to verify Cloudinary credentials
 app.get('/api/test-cloudinary', (req, res) => {
     const config = cloudinary.config();
