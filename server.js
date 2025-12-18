@@ -216,6 +216,8 @@ app.get('/terms.html', (req, res) => {
 
 // Photo upload endpoint - accept both 'photos' and 'photo' field names
 app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, { name: 'photo', maxCount: 5 }]), async (req, res) => {
+    console.log('=== PHOTO UPLOAD ENDPOINT HIT ===');
+    console.log('CLOUDINARY_UNSIGNED_UPLOAD_PRESET:', process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET || 'NOT SET');
     try {
         // Handle both 'photos' and 'photo' field names
         const files = req.files?.photos || req.files?.photo || [];
