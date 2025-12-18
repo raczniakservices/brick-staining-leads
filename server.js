@@ -4,6 +4,7 @@ const path = require('path');
 const twilio = require('twilio');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
+const nodemailer = require('nodemailer');
 const app = express();
 
 // Unsigned Cloudinary upload helper (avoids API secret/signature issues entirely).
@@ -151,6 +152,104 @@ const CONFIG = {
     
     PORT: process.env.PORT || 3000
 };
+
+// ===========================================
+// EMAIL (optional)
+// ===========================================
+// This is intentionally optional: if you don't set EMAIL_* env vars, nothing is sent.
+// Recommended easiest path: Resend/SendGrid/SMTP provider that gives you SMTP creds.
+const EMAIL_CONFIG = {
+    enabled: String(process.env.EMAIL_ENABLED || '').trim() === '1',
+    to: String(process.env.EMAIL_TO || '').trim(), // business/owner inbox
+    from: String(process.env.EMAIL_FROM || '').trim() || 'leads@localhost',
+    smtp: {
+        host: String(process.env.EMAIL_SMTP_HOST || '').trim(),
+        port: Number(process.env.EMAIL_SMTP_PORT || 0),
+        secure: String(process.env.EMAIL_SMTP_SECURE || '').trim() === '1', // 1=true
+        user: String(process.env.EMAIL_SMTP_USER || '').trim(),
+        pass: String(process.env.EMAIL_SMTP_PASS || '').trim()
+    },
+    sendCustomerConfirmation: String(process.env.EMAIL_SEND_CUSTOMER_CONFIRMATION || '').trim() === '1'
+};
+
+function buildLeadEmailText(lead) {
+    const lines = [];
+    lines.push('New Lead Received');
+    lines.push('=================');
+    lines.push(`Submitted: ${lead.submittedAt || ''}`);
+    lines.push('');
+    lines.push(`Name: ${lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim()}`.trim());
+    lines.push(`Phone: ${lead.phone || ''}`);
+    if (lead.email) lines.push(`Email: ${lead.email}`);
+    lines.push(`Address: ${lead.address || ''}`);
+    lines.push(`Property Type: ${lead.propertyType || ''}`);
+    lines.push(`Best Contact Method: ${lead.contactMethod || ''}`);
+    lines.push(`Service: ${lead.service || ''}`);
+    lines.push(`Referral: ${lead.referral || ''}`);
+    if (lead.details) {
+        lines.push('');
+        lines.push('Details:');
+        lines.push(String(lead.details));
+    }
+    if ((lead.photos && lead.photos.length) || (lead.photoData && lead.photoData.length) || lead.hasPhotos) {
+        lines.push('');
+        lines.push(`Photos: ${(lead.photos?.length || 0) + (lead.photoData?.length || 0)} attached`);
+        if (lead.photos?.length) {
+            lines.push('Photo URLs:');
+            for (const url of lead.photos) lines.push(url);
+        }
+    }
+    lines.push('');
+    lines.push(`Admin: ${CONFIG.BASE_URL}/admin`);
+    return lines.join('\n');
+}
+
+function createMailer() {
+    if (!EMAIL_CONFIG.enabled) return null;
+    const { host, port, user, pass } = EMAIL_CONFIG.smtp;
+    if (!EMAIL_CONFIG.to || !host || !port || !user || !pass) {
+        console.warn('EMAIL_ENABLED=1 but EMAIL_* SMTP vars are incomplete. Email notifications disabled.');
+        return null;
+    }
+    return nodemailer.createTransport({
+        host,
+        port,
+        secure: EMAIL_CONFIG.smtp.secure,
+        auth: { user, pass }
+    });
+}
+
+const mailer = createMailer();
+
+async function trySendLeadEmail(lead) {
+    try {
+        if (!mailer) return;
+        const subjectBits = [];
+        if (lead.service) subjectBits.push(String(lead.service));
+        const who = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || lead.phone || 'New lead';
+        subjectBits.push(who);
+        const subject = `New Lead: ${subjectBits.filter(Boolean).join(' - ')}`.slice(0, 160);
+
+        await mailer.sendMail({
+            from: EMAIL_CONFIG.from,
+            to: EMAIL_CONFIG.to,
+            subject,
+            text: buildLeadEmailText(lead)
+        });
+        console.log('✅ Lead email notification sent to', EMAIL_CONFIG.to);
+
+        if (EMAIL_CONFIG.sendCustomerConfirmation && lead.email) {
+            await mailer.sendMail({
+                from: EMAIL_CONFIG.from,
+                to: lead.email,
+                subject: 'We received your request',
+                text: `Thanks for reaching out.\n\nWe received your request and will follow up soon.\n\nIf you need anything urgent, reply to this email or call us.\n`
+            });
+        }
+    } catch (e) {
+        console.error('❌ Failed to send lead email notification:', e?.message || e);
+    }
+}
 
 // ===========================================
 // MIDDLEWARE
@@ -338,6 +437,9 @@ app.post('/api/submit-lead', (req, res) => {
         if (lead.photoData && lead.photoData.length > 0) {
             console.log(`  - ${lead.photoData.length} photo(s) stored as base64`);
         }
+        // Fire-and-forget email notification (optional)
+        trySendLeadEmail(lead);
+
         res.json({ success: true, leadId: lead.id });
     } catch (error) {
         console.error('Error saving lead:', error);

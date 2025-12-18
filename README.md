@@ -41,3 +41,23 @@ Options:
 
 After deploying, update `FORM_URL` in server.js with your public URL.
 
+## Email Notifications (optional)
+
+This app can send an email to the business owner when a new lead is submitted.
+
+### Environment Variables
+
+Set these in your host (Render) to enable:
+
+- `EMAIL_ENABLED=1`
+- `EMAIL_TO=owner@yourbusiness.com`
+- `EMAIL_FROM=leads@yourdomain.com` (or any verified sender your SMTP provider allows)
+- `EMAIL_SMTP_HOST=smtp.yourprovider.com`
+- `EMAIL_SMTP_PORT=587`
+- `EMAIL_SMTP_SECURE=0` (use 1 for port 465)
+- `EMAIL_SMTP_USER=...`
+- `EMAIL_SMTP_PASS=...`
+
+Optional:
+- `EMAIL_SEND_CUSTOMER_CONFIRMATION=1` (send a basic confirmation email to the customer if they provided an email)
+
