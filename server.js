@@ -43,11 +43,11 @@ if (process.env.CLOUDINARY_URL) {
 
 if (!cloudinaryConfigured && process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
     cloudinary.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET
+        cloud_name: String(process.env.CLOUDINARY_CLOUD_NAME).trim(),
+        api_key: String(process.env.CLOUDINARY_API_KEY).trim(),
+        api_secret: String(process.env.CLOUDINARY_API_SECRET).trim()
     });
-    console.log('Cloudinary configured with individual credentials, cloud_name:', process.env.CLOUDINARY_CLOUD_NAME);
+    console.log('Cloudinary configured with individual credentials, cloud_name:', String(process.env.CLOUDINARY_CLOUD_NAME).trim());
     cloudinaryConfigured = true;
 }
 
@@ -163,18 +163,7 @@ app.get('/terms.html', (req, res) => {
 });
 
 // Test endpoint to verify Cloudinary credentials
-app.get('/api/test-cloudinary', (req, res) => {
-    const config = cloudinary.config();
-    res.json({
-        configured: !!config.cloud_name,
-        cloud_name: config.cloud_name || 'NOT SET',
-        api_key: config.api_key ? config.api_key.substring(0, 5) + '...' : 'NOT SET',
-        has_api_secret: !!config.api_secret,
-        api_secret_length: config.api_secret ? config.api_secret.length : 0,
-        env_url: process.env.CLOUDINARY_URL ? 'SET' : 'NOT SET',
-        env_cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'NOT SET'
-    });
-});
+// NOTE: This route is defined later with a full live upload/ping test and admin protection.
 
 // Photo upload endpoint - accept both 'photos' and 'photo' field names
 app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, { name: 'photo', maxCount: 5 }]), async (req, res) => {
@@ -529,11 +518,26 @@ app.get('/estimate', (req, res) => {
 // CLOUDINARY DIAGNOSTIC ENDPOINT
 // ===========================================
 app.get('/api/test-cloudinary', async (req, res) => {
+    // Lock this endpoint down (it reveals config state).
+    // Use: /api/test-cloudinary?pw=YOUR_ADMIN_PASSWORD
+    if (process.env.ADMIN_PASSWORD) {
+        const provided = String(req.query.pw || '');
+        if (!provided || provided !== process.env.ADMIN_PASSWORD) {
+            return res.status(404).send('Not found');
+        }
+    }
+
     const diagnostics = {
         configured: cloudinaryConfigured,
         config: null,
         test_result: null,
-        error: null
+        error: null,
+        env: {
+            has_CLOUDINARY_URL: !!process.env.CLOUDINARY_URL,
+            has_CLOUDINARY_CLOUD_NAME: !!process.env.CLOUDINARY_CLOUD_NAME,
+            has_CLOUDINARY_API_KEY: !!process.env.CLOUDINARY_API_KEY,
+            has_CLOUDINARY_API_SECRET: !!process.env.CLOUDINARY_API_SECRET
+        }
     };
 
     // Show what config values we have
@@ -545,6 +549,19 @@ app.get('/api/test-cloudinary', async (req, res) => {
             api_secret_length: config.api_secret ? config.api_secret.length : 0,
             api_secret_present: !!config.api_secret
         };
+
+        // First try a cheap auth check (no upload).
+        try {
+            await cloudinary.api.ping();
+            diagnostics.ping = { success: true };
+        } catch (error) {
+            diagnostics.ping = {
+                success: false,
+                error_message: error.message,
+                error_code: error.http_code,
+                error_details: error.error ? error.error.message : 'No details'
+            };
+        }
 
         // Try a real upload test with a tiny image
         try {
@@ -586,7 +603,7 @@ app.get('/api/test-cloudinary', async (req, res) => {
 
             // Specific error diagnosis
             if (error.message && error.message.includes('Invalid Signature')) {
-                diagnostics.diagnosis = '❌ API_SECRET is WRONG - Copy it exactly from Cloudinary dashboard';
+                diagnostics.diagnosis = '❌ Invalid Signature: the API Secret used by the server does not match the API Key in Cloudinary (most commonly: wrong secret, hidden whitespace/newline, or mixed key+secret from different keys).';
             } else if (error.message && error.message.includes('Invalid API Key')) {
                 diagnostics.diagnosis = '❌ API_KEY is WRONG - Copy it exactly from Cloudinary dashboard';
             } else if (error.message && error.message.includes('Cloud name')) {
