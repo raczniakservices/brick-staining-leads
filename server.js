@@ -264,12 +264,14 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
             // If unsigned preset is configured, use it directly (most reliable)
             if (unsignedPreset && cloudName) {
                 try {
-                    console.log('Using UNSIGNED upload for:', file.originalname);
+                    // Sanitize filename: remove spaces, slashes, special chars
+                    const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+                    console.log('Using UNSIGNED upload for:', safeName);
                     const unsignedRes = await cloudinaryUnsignedUpload({
                         cloudName,
                         uploadPreset: unsignedPreset,
                         dataUri
-                        // Don't pass folder - let the preset handle it
+                        // Don't pass folder or any other params - preset handles everything
                     });
                     photoUrls.push(unsignedRes.secure_url);
                     console.log('✅ Photo uploaded to Cloudinary (unsigned):', unsignedRes.secure_url);
