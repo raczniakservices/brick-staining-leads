@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Raczniak Services — Small Business Automation</title>
+    <meta
+      name="description"
+      content="Raczniak Services provides lead capture pages and SMS automation for small businesses."
+    />
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #0f1b33;
+        --text: #eaf0ff;
+        --muted: #b7c4e6;
+        --accent: #7dd3fc;
+        --border: rgba(255, 255, 255, 0.08);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: radial-gradient(1200px 600px at 10% 0%, #132a55 0%, var(--bg) 60%);
+        color: var(--text);
+        line-height: 1.55;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 48px 20px;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+        align-items: start;
+      }
+      @media (max-width: 860px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: rgba(15, 27, 51, 0.72);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(8px);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 34px;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        letter-spacing: -0.01em;
+      }
+      p {
+        margin: 0 0 12px;
+        color: var(--muted);
+      }
+      ul {
+        margin: 10px 0 0 18px;
+        color: var(--muted);
+      }
+      .pill {
+        display: inline-block;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .kvs {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 8px 12px;
+        margin-top: 10px;
+      }
+      .k {
+        color: var(--muted);
+      }
+      .v {
+        color: var(--text);
+      }
+      .small {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .footer {
+        margin-top: 18px;
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hero">
+        <div class="card">
+          <div class="pill">Small business automation</div>
+          <h1>Raczniak Services</h1>
+          <p>
+            Lead capture pages + SMS automation for small businesses. We help you respond faster, track leads, and
+            convert more jobs.
+          </p>
+          <h2>What we provide</h2>
+          <ul>
+            <li>High-converting landing pages with quote / lead forms</li>
+            <li>Lead dashboard (new/contacted/quoted/won/lost)</li>
+            <li>SMS + call automation (twilio-powered)</li>
+            <li>Routing per client phone number (multi-business platform)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Contact</h2>
+          <div class="kvs">
+            <div class="k">Email</div>
+            <div class="v"><a href="mailto:raczniakservices@gmail.com">raczniakservices@gmail.com</a></div>
+            <div class="k">Service</div>
+            <div class="v">United States</div>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0" />
+
+          <h2>Messaging compliance</h2>
+          <p class="small">
+            Messaging is sent only to people who request contact via a business’s landing page / lead form or otherwise
+            opt in. Message frequency varies. Msg &amp; data rates may apply.
+          </p>
+          <p class="small">
+            Reply <strong>STOP</strong> to unsubscribe. Reply <strong>HELP</strong> for help.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer small">
+        <div>
+          <a href="/privacy.html">Privacy Policy</a>
+          &nbsp;•&nbsp;
+          <a href="/terms.html">Terms</a>
+        </div>
+        <div>© <span id="y"></span> Raczniak Services</div>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById('y').textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
+
+

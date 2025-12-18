@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Terms — Raczniak Services</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #0f1b33;
+        --text: #eaf0ff;
+        --muted: #b7c4e6;
+        --accent: #7dd3fc;
+        --border: rgba(255, 255, 255, 0.08);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: radial-gradient(1200px 600px at 10% 0%, #132a55 0%, var(--bg) 60%);
+        color: var(--text);
+        line-height: 1.6;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .wrap { max-width: 920px; margin: 0 auto; padding: 48px 20px; }
+      .card {
+        background: rgba(15, 27, 51, 0.72);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(8px);
+      }
+      h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: -0.02em; }
+      h2 { margin: 18px 0 8px; font-size: 18px; }
+      p, li { color: var(--muted); }
+      .small { font-size: 13px; color: var(--muted); }
+      ul { margin: 8px 0 0 18px; }
+      .toplinks { display:flex; gap:12px; flex-wrap:wrap; margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Terms</h1>
+        <div class="small">Last updated: <span id="d"></span></div>
+        <div class="toplinks small">
+          <a href="/platform.html">Back to platform</a>
+          <span>•</span>
+          <a href="/privacy.html">Privacy Policy</a>
+          <span>•</span>
+          <a href="mailto:raczniakservices@gmail.com">raczniakservices@gmail.com</a>
+        </div>
+
+        <h2>Service</h2>
+        <p>
+          Raczniak Services provides lead capture pages, dashboards, and messaging automation for small businesses.
+          Availability and features may change over time.
+        </p>
+
+        <h2>Acceptable use</h2>
+        <ul>
+          <li>No spam or unsolicited messaging.</li>
+          <li>Only send messages to people who have opted in or requested contact.</li>
+          <li>Comply with applicable laws and carrier requirements (including A2P 10DLC / toll-free verification).</li>
+        </ul>
+
+        <h2>SMS terms</h2>
+        <p>
+          Message frequency varies. Msg &amp; data rates may apply. Users can opt out at any time by replying
+          <strong>STOP</strong>. For help, reply <strong>HELP</strong>.
+        </p>
+
+        <h2>Disclaimer</h2>
+        <p>
+          The service is provided “as is” without warranties of any kind. We are not responsible for carrier filtering,
+          delivery delays, or third-party outages.
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          Questions: <a href="mailto:raczniakservices@gmail.com">raczniakservices@gmail.com</a>
+        </p>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById('d').textContent = new Date().toISOString().slice(0, 10);
+    </script>
+  </body>
+</html>
+
+
