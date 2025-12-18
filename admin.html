@@ -137,6 +137,15 @@
             box-shadow: 0 0 0 2px rgba(196, 92, 38, 0.25);
         }
 
+        .photos-pill {
+            border-color: rgba(125, 211, 252, 0.35);
+        }
+
+        .photos-pill.active {
+            border-color: rgba(125, 211, 252, 0.8);
+            box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.18);
+        }
+
         .pill-count {
             background: rgba(255,255,255,0.06);
             border: 1px solid var(--border);
@@ -269,6 +278,30 @@
             color: var(--text-muted);
             font-size: 12px;
             margin-top: 6px;
+        }
+
+        .helper {
+            color: var(--text-muted);
+            font-size: 12px;
+            margin: 6px 0 14px;
+        }
+
+        .helper strong {
+            color: var(--text);
+        }
+
+        .inline-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            color: var(--text-muted);
+            margin-left: 8px;
         }
 
         .modal textarea,
@@ -600,6 +633,14 @@
         <button class="pill-btn" data-quick="overdue" onclick="setQuickFilter('overdue')">
             Overdue <span class="pill-count" id="countOverdue">0</span>
         </button>
+        <button class="pill-btn photos-pill" data-quick="photos" onclick="setQuickFilter('photos')">
+            Photos <span class="pill-count" id="countPhotos">0</span>
+        </button>
+    </div>
+
+    <div class="helper" id="adminHelper">
+        <strong>Follow-up</strong> shows the next time you plan to contact the lead. Set it inside <strong>View</strong>.
+        <span class="inline-badge">Screenshot mode: /admin?demo=1</span>
     </div>
 
     <div class="filters">
@@ -671,7 +712,7 @@
                     <th>Contact</th>
                     <th>Service</th>
                     <th>Property</th>
-                    <th>Next</th>
+                    <th title="Next scheduled follow-up date/time (set in View)">Follow-up</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -702,7 +743,7 @@
     <script>
         let allLeads = [];
         let filteredLeads = [];
-        let quickFilter = 'open'; // open | new | contacted | quoted | won | lost | overdue
+        let quickFilter = 'open'; // open | new | contacted | quoted | won | lost | overdue | photos
 
         const serviceNames = {
             'brick-staining': 'Brick Staining',
@@ -731,6 +772,30 @@
         function displayServiceName(serviceKey) {
             if (DEMO_MODE) return 'Service Requested';
             return serviceNames[serviceKey] || serviceKey || 'N/A';
+        }
+
+        function displayName(lead) {
+            if (DEMO_MODE) return 'Sample Lead';
+            return lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+        }
+
+        function displayPhone(phone) {
+            if (DEMO_MODE) return '(555) 010-1234';
+            return phone || '';
+        }
+
+        function displayEmail(email) {
+            if (DEMO_MODE) return 'client@example.com';
+            return email || '';
+        }
+
+        function displayAddress(address) {
+            if (DEMO_MODE) return '123 Main St, Your City';
+            return address || '';
+        }
+
+        function photoCount(lead) {
+            return (lead.photos?.length || 0) + (lead.photoData?.length || 0);
         }
 
         function buildServiceFilterOptions(leads) {
@@ -783,7 +848,8 @@
                 quoted: allLeads.filter(l => l.status === 'quoted').length,
                 won: allLeads.filter(l => l.status === 'won').length,
                 lost: allLeads.filter(l => l.status === 'lost').length,
-                overdue: allLeads.filter(l => isOverdue(l)).length
+                overdue: allLeads.filter(l => isOverdue(l)).length,
+                photos: allLeads.filter(l => photoCount(l) > 0 || !!l.hasPhotos).length
             };
 
             document.getElementById('countOpen').textContent = counts.open;
@@ -793,6 +859,7 @@
             document.getElementById('countWon').textContent = counts.won;
             document.getElementById('countLost').textContent = counts.lost;
             document.getElementById('countOverdue').textContent = counts.overdue;
+            document.getElementById('countPhotos').textContent = counts.photos;
         }
 
         function setQuickFilter(value) {
@@ -864,6 +931,7 @@
                 if (quickFilter === 'open') matchesQuick = !['won', 'lost'].includes(lead.status);
                 if (['new', 'contacted', 'quoted', 'won', 'lost'].includes(quickFilter)) matchesQuick = lead.status === quickFilter;
                 if (quickFilter === 'overdue') matchesQuick = isOverdue(lead);
+                if (quickFilter === 'photos') matchesQuick = photoCount(lead) > 0 || !!lead.hasPhotos;
                 
                 let matchesDate = true;
                 if (dateFilter) {
@@ -910,10 +978,14 @@
             }
             
             tbody.innerHTML = filteredLeads.map(lead => {
-                const name = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+                const name = displayName(lead);
                 const contactPref = lead.contactMethod ? `Prefers: ${lead.contactMethod}` : '';
                 const referral = referralNames[lead.referral] || lead.referral || '';
                 const notesPreview = lead.notes ? `<div class="note-preview">${String(lead.notes)}</div>` : '';
+                const safePhone = displayPhone(lead.phone);
+                const safeEmail = displayEmail(lead.email);
+                const safeAddress = displayAddress(lead.address);
+                const pc = photoCount(lead);
                 
                 return `
                     <tr>
@@ -923,13 +995,13 @@
                         </td>
                         <td>
                             <span class="lead-name">${name}</span>
-                            <div class="lead-details">${lead.address || ''}</div>
+                            <div class="lead-details">${safeAddress}</div>
                             ${notesPreview}
                         </td>
                         <td>
-                            <a href="tel:${lead.phone}" class="contact-link">${lead.phone}</a>
+                            <a href="tel:${DEMO_MODE ? '' : (lead.phone || '')}" class="contact-link">${safePhone}</a>
                             <div class="lead-details">${contactPref}</div>
-                            ${lead.email ? `<div class="lead-details"><a href="mailto:${lead.email}" class="contact-link">${lead.email}</a></div>` : ''}
+                            ${safeEmail ? `<div class="lead-details"><a href="mailto:${DEMO_MODE ? '' : safeEmail}" class="contact-link">${safeEmail}</a></div>` : ''}
                         </td>
                         <td>
                             ${displayServiceName(lead.service)}
@@ -937,7 +1009,7 @@
                         </td>
                         <td>
                             ${lead.propertyType ? lead.propertyType.charAt(0).toUpperCase() + lead.propertyType.slice(1) : 'N/A'}
-                            ${lead.hasPhotos ? '<div class="lead-details">📷 Has photos</div>' : ''}
+                            ${pc > 0 ? `<div class="lead-details">📷 Photos: ${pc}</div>` : (lead.hasPhotos ? '<div class="lead-details">📷 Photos: 0</div>' : '')}
                         </td>
                         <td>
                             ${formatNextFollowup(lead)}
@@ -964,7 +1036,10 @@
             const lead = allLeads.find(l => l.id == leadId);
             if (!lead) return;
 
-            const name = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+            const name = displayName(lead);
+            const safePhone = displayPhone(lead.phone);
+            const safeEmail = displayEmail(lead.email);
+            const safeAddress = displayAddress(lead.address);
             
             document.getElementById('leadDetails').innerHTML = `
                 <div class="detail-row">
@@ -973,17 +1048,17 @@
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Phone</div>
-                    <div class="detail-value"><a href="tel:${lead.phone}" class="contact-link">${lead.phone}</a></div>
+                    <div class="detail-value"><a href="tel:${DEMO_MODE ? '' : (lead.phone || '')}" class="contact-link">${safePhone}</a></div>
                 </div>
-                ${lead.email ? `
+                ${safeEmail ? `
                 <div class="detail-row">
                     <div class="detail-label">Email</div>
-                    <div class="detail-value"><a href="mailto:${lead.email}" class="contact-link">${lead.email}</a></div>
+                    <div class="detail-value"><a href="mailto:${DEMO_MODE ? '' : safeEmail}" class="contact-link">${safeEmail}</a></div>
                 </div>
                 ` : ''}
                 <div class="detail-row">
                     <div class="detail-label">Property Address</div>
-                    <div class="detail-value">${lead.address || 'N/A'}</div>
+                    <div class="detail-value">${safeAddress || 'N/A'}</div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Property Type</div>
@@ -1078,13 +1153,13 @@
         function exportCSV() {
             const headers = ['Date', 'Name', 'Phone', 'Email', 'Address', 'Property Type', 'Service', 'Status', 'Referral Source'];
             const rows = filteredLeads.map(lead => {
-                const name = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+                const name = displayName(lead);
                 return [
                     new Date(lead.submittedAt).toLocaleString(),
                     name,
-                    lead.phone || '',
-                    lead.email || '',
-                    lead.address || '',
+                    displayPhone(lead.phone),
+                    displayEmail(lead.email),
+                    displayAddress(lead.address),
                     lead.propertyType || '',
                     displayServiceName(lead.service),
                     lead.status || '',
