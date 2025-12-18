@@ -416,6 +416,7 @@
         const photoUpload = document.getElementById('photoUpload');
         const photoInput = document.getElementById('photos');
         const photoPreview = document.getElementById('photoPreview');
+        let selectedPhotoFiles = [];
 
         photoUpload.addEventListener('click', () => photoInput.click());
         
@@ -440,7 +441,11 @@
 
         function handleFiles(files) {
             photoPreview.innerHTML = '';
-            Array.from(files).slice(0, 5).forEach(file => {
+            selectedPhotoFiles = Array.from(files)
+                .filter(f => f && f.type && f.type.startsWith('image/'))
+                .slice(0, 5);
+
+            selectedPhotoFiles.forEach(file => {
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -490,7 +495,7 @@
                 const leadId = data.leadId || formData.submittedAt;
                 
                 // Upload photos in background and update lead with photo URLs
-                const photoFiles = document.getElementById('photos').files;
+                const photoFiles = selectedPhotoFiles || [];
                 if (photoFiles.length > 0) {
                     const photoFormData = new FormData();
                     Array.from(photoFiles).forEach(file => {
@@ -522,6 +527,9 @@
                         console.error('Photo upload failed:', err);
                     });
                 }
+
+                // Reset local selection after submit
+                selectedPhotoFiles = [];
                 
                 // Show success immediately
                 formContent.classList.add('hide');
