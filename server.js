@@ -71,7 +71,14 @@ const CONFIG = {
     // Client configurations - map phone numbers to business info
     // Add a new entry for each client
     CLIENTS: {
-        // Brick Staining
+        // Brick Staining - New local number (SMS enabled)
+        '+14436650603': {
+            businessName: 'Preferred Brick Staining Solutions',
+            businessPhone: '443-278-1451',
+            formUrl: process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL || 'http://localhost:3000',
+            slug: 'brick-staining' // for routing to specific forms/admin
+        },
+        // Brick Staining - Toll-free (voice only until verified)
         '+18663288123': {
             businessName: 'Preferred Brick Staining Solutions',
             businessPhone: '443-278-1451',
