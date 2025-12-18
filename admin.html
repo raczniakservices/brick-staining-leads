@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leads Dashboard | Preferred Brick Staining</title>
+    <title>Leads Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -570,7 +570,7 @@
     <div class="header">
         <div class="header-left">
             <h1>Leads Dashboard</h1>
-            <p class="subtitle">Preferred Brick Staining Solutions</p>
+            <p class="subtitle" id="businessSubtitle">Client Dashboard</p>
         </div>
         <div class="header-actions">
             <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
@@ -622,14 +622,6 @@
             <label>Service</label>
             <select id="serviceFilter" onchange="filterLeads()">
                 <option value="">All Services</option>
-                <option value="brick-staining">Brick Staining</option>
-                <option value="block-staining">Block Staining</option>
-                <option value="mortar-staining">Mortar Staining</option>
-                <option value="stone-staining">Stone Staining</option>
-                <option value="historic-restoration">Historic Restoration</option>
-                <option value="paver-staining">Paver Staining</option>
-                <option value="precast-staining">Precast Staining</option>
-                <option value="graffiti-removal">Graffiti Removal</option>
             </select>
         </div>
         <div class="filter-group">
@@ -723,6 +715,47 @@
             'graffiti-removal': 'Graffiti Removal',
             'not-sure': 'Needs Consultation'
         };
+
+        // Demo mode for screenshot safety: /admin?demo=1
+        const urlParams = new URLSearchParams(window.location.search);
+        const DEMO_MODE = urlParams.get('demo') === '1';
+
+        function getBusinessSubtitle() {
+            if (DEMO_MODE) return 'Client Dashboard (Demo View)';
+            // Optional: /admin?business=Your%20Business
+            const fromQuery = urlParams.get('business');
+            if (fromQuery) return fromQuery;
+            return 'Client Dashboard';
+        }
+
+        function displayServiceName(serviceKey) {
+            if (DEMO_MODE) return 'Service Requested';
+            return serviceNames[serviceKey] || serviceKey || 'N/A';
+        }
+
+        function buildServiceFilterOptions(leads) {
+            const select = document.getElementById('serviceFilter');
+            if (!select) return;
+
+            const current = select.value;
+            const unique = Array.from(new Set((leads || []).map(l => l.service).filter(Boolean)));
+
+            // Keep the first "All Services" option
+            select.querySelectorAll('option:not(:first-child)').forEach(o => o.remove());
+
+            unique
+                .sort((a, b) => displayServiceName(a).localeCompare(displayServiceName(b)))
+                .forEach(serviceKey => {
+                    const opt = document.createElement('option');
+                    opt.value = serviceKey;
+                    opt.textContent = displayServiceName(serviceKey);
+                    select.appendChild(opt);
+                });
+
+            // Restore selection if possible
+            const hasCurrent = Array.from(select.options).some(o => o.value === current);
+            select.value = hasCurrent ? current : '';
+        }
 
         const referralNames = {
             'referral': 'Friend/Family Referral',
@@ -899,7 +932,7 @@
                             ${lead.email ? `<div class="lead-details"><a href="mailto:${lead.email}" class="contact-link">${lead.email}</a></div>` : ''}
                         </td>
                         <td>
-                            ${serviceNames[lead.service] || lead.service || 'N/A'}
+                            ${displayServiceName(lead.service)}
                             ${referral ? `<div class="lead-details">Via: ${referral}</div>` : ''}
                         </td>
                         <td>
@@ -958,7 +991,7 @@
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Service Needed</div>
-                    <div class="detail-value">${serviceNames[lead.service] || lead.service || 'N/A'}</div>
+                    <div class="detail-value">${displayServiceName(lead.service)}</div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Best Way to Reach</div>
@@ -1053,7 +1086,7 @@
                     lead.email || '',
                     lead.address || '',
                     lead.propertyType || '',
-                    serviceNames[lead.service] || lead.service || '',
+                    displayServiceName(lead.service),
                     lead.status || '',
                     referralNames[lead.referral] || lead.referral || ''
                 ];
@@ -1125,6 +1158,7 @@
                 }
                 
                 allLeads = await response.json();
+                buildServiceFilterOptions(allLeads);
                 updateStats();
                 filterLeads();
                 
@@ -1132,6 +1166,11 @@
                 console.error('Error loading leads:', error);
             }
         }
+
+        // Set safe subtitle + page title
+        const subtitleEl = document.getElementById('businessSubtitle');
+        if (subtitleEl) subtitleEl.textContent = getBusinessSubtitle();
+        if (DEMO_MODE) document.title = 'Leads Dashboard (Demo)';
 
         async function updateStatus(leadId, newStatus) {
             try {
