@@ -1130,12 +1130,12 @@
                     <div class="detail-value" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px;">
                         ${(lead.photos || []).map((photoUrl, idx) => `
                             <div style="position: relative;">
-                                <img src="${photoUrl}" alt="Project photo ${idx + 1}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); cursor: pointer;" onclick="window.open('${photoUrl}', '_blank')" onerror="this.style.display='none'; console.error('Failed to load photo:', '${photoUrl}')">
+                                <img src="${photoUrl}" alt="Project photo ${idx + 1}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); cursor: pointer;" onclick="openPhotoViewer('${photoUrl}')" onerror="this.style.display='none'; console.error('Failed to load photo:', '${photoUrl}')">
                             </div>
                         `).join('')}
                         ${(lead.photoData || []).map((photo, idx) => `
                             <div style="position: relative;">
-                                <img src="${photo.data}" alt="${photo.name || 'Photo ' + (idx + 1)}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); cursor: pointer;" onclick="window.open('${photo.data}', '_blank')" onerror="this.style.display='none'; console.error('Failed to load base64 photo')">
+                                <img src="${photo.data}" alt="${photo.name || 'Photo ' + (idx + 1)}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); cursor: pointer;" onclick="openPhotoViewer('${photo.data}')" onerror="this.style.display='none'; console.error('Failed to load base64 photo')">
                             </div>
                         `).join('')}
                     </div>
@@ -1148,6 +1148,101 @@
 
         function closeModal() {
             document.getElementById('leadModal').classList.remove('active');
+        }
+
+        // Photo viewer (avoids opening huge base64 URLs in a new tab)
+        function openPhotoViewer(src) {
+            const existing = document.getElementById('photoViewer');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'photoViewer';
+            overlay.style.position = 'fixed';
+            overlay.style.inset = '0';
+            overlay.style.background = 'rgba(0,0,0,0.72)';
+            overlay.style.zIndex = '99999';
+            overlay.style.display = 'flex';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+            overlay.style.padding = '24px';
+
+            const frame = document.createElement('div');
+            frame.style.maxWidth = '1100px';
+            frame.style.width = '100%';
+            frame.style.maxHeight = '90vh';
+            frame.style.background = '#0b0f17';
+            frame.style.border = '1px solid rgba(255,255,255,0.12)';
+            frame.style.borderRadius = '10px';
+            frame.style.overflow = 'hidden';
+            frame.style.boxShadow = '0 24px 60px rgba(0,0,0,0.55)';
+
+            const header = document.createElement('div');
+            header.style.display = 'flex';
+            header.style.alignItems = 'center';
+            header.style.justifyContent = 'space-between';
+            header.style.padding = '10px 12px';
+            header.style.borderBottom = '1px solid rgba(255,255,255,0.10)';
+
+            const title = document.createElement('div');
+            title.textContent = 'Photo Preview';
+            title.style.fontWeight = '600';
+            title.style.color = 'rgba(255,255,255,0.9)';
+            title.style.fontSize = '14px';
+
+            const actions = document.createElement('div');
+            actions.style.display = 'flex';
+            actions.style.gap = '8px';
+
+            const openBtn = document.createElement('button');
+            openBtn.textContent = 'Open in new tab';
+            openBtn.className = 'btn btn-secondary';
+            openBtn.onclick = () => {
+                // For Cloudinary URLs this is safe. For base64, keep it in-viewer to avoid crashes.
+                if (typeof src === 'string' && src.startsWith('data:')) return;
+                window.open(src, '_blank');
+            };
+
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Close';
+            closeBtn.className = 'btn btn-secondary';
+            closeBtn.onclick = () => overlay.remove();
+
+            actions.appendChild(openBtn);
+            actions.appendChild(closeBtn);
+            header.appendChild(title);
+            header.appendChild(actions);
+
+            const body = document.createElement('div');
+            body.style.display = 'flex';
+            body.style.alignItems = 'center';
+            body.style.justifyContent = 'center';
+            body.style.padding = '12px';
+            body.style.maxHeight = 'calc(90vh - 52px)';
+
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = 'Photo';
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = 'calc(90vh - 76px)';
+            img.style.objectFit = 'contain';
+            img.style.display = 'block';
+
+            body.appendChild(img);
+            frame.appendChild(header);
+            frame.appendChild(body);
+            overlay.appendChild(frame);
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+            document.addEventListener('keydown', function onEsc(e) {
+                if (e.key === 'Escape') {
+                    overlay.remove();
+                    document.removeEventListener('keydown', onEsc);
+                }
+            });
+
+            document.body.appendChild(overlay);
         }
 
         function exportCSV() {
