@@ -47,6 +47,9 @@ let cloudinaryConfigured = false;
 if (process.env.CLOUDINARY_URL) {
     // Parse CLOUDINARY_URL robustly and configure explicitly
     const rawUrl = process.env.CLOUDINARY_URL.trim(); // Remove any whitespace
+    console.log('=== CLOUDINARY DEBUG ===');
+    console.log('Raw CLOUDINARY_URL length:', rawUrl.length);
+    console.log('First 40 chars:', rawUrl.substring(0, 40));
     try {
         const u = new URL(rawUrl);
         // Expected: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
@@ -54,6 +57,13 @@ if (process.env.CLOUDINARY_URL) {
             const apiKey = u.username.trim();
             const apiSecret = decodeURIComponent(u.password).trim();
             const cloudName = u.hostname.trim();
+
+            console.log('Parsed cloud_name:', cloudName);
+            console.log('Parsed api_key:', apiKey);
+            console.log('Parsed api_secret length:', apiSecret.length);
+            console.log('Parsed api_secret first 5 chars:', apiSecret.substring(0, 5));
+            console.log('Parsed api_secret last 5 chars:', apiSecret.substring(apiSecret.length - 5));
+            console.log('=== END CLOUDINARY DEBUG ===');
 
             cloudinary.config({
                 cloud_name: cloudName,
