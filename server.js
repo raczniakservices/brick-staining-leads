@@ -503,6 +503,25 @@ app.put('/api/leads/:id', checkAuth, (req, res) => {
     }
 });
 
+// Delete a lead (useful for spam/test/junk submissions)
+app.delete('/api/leads/:id', checkAuth, (req, res) => {
+    try {
+        const leads = getLeads();
+        const idx = leads.findIndex(l => l.id == req.params.id);
+
+        if (idx === -1) {
+            return res.status(404).json({ success: false, error: 'Lead not found' });
+        }
+
+        const [removed] = leads.splice(idx, 1);
+        fs.writeFileSync(DB_PATH, JSON.stringify(leads, null, 2));
+        res.json({ success: true, deletedId: removed?.id });
+    } catch (error) {
+        console.error('Error deleting lead:', error);
+        res.status(500).json({ success: false, error: 'Failed to delete lead' });
+    }
+});
+
 // Twilio SMS webhook
 app.post('/sms-webhook', (req, res) => {
     const fromNumber = req.body.From;

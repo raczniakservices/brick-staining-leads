@@ -82,6 +82,15 @@
             background: var(--primary-dark);
         }
 
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            filter: brightness(0.95);
+        }
+
         .btn-secondary {
             background: var(--card-bg);
             color: var(--text);
@@ -339,6 +348,15 @@
             gap: 10px;
             justify-content: flex-end;
             margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .modal-actions .spacer {
+            flex: 1;
+        }
+
+        .advanced-hidden {
+            display: none !important;
         }
 
         table {
@@ -606,6 +624,7 @@
             <p class="subtitle" id="businessSubtitle">Client Dashboard</p>
         </div>
         <div class="header-actions">
+            <button class="btn btn-secondary" id="toggleAdvancedBtn" onclick="toggleAdvanced()">Advanced</button>
             <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
             <button class="btn btn-primary" onclick="loadLeads()">Refresh</button>
         </div>
@@ -643,12 +662,12 @@
         <span class="inline-badge">Screenshot mode: /admin?demo=1</span>
     </div>
 
-    <div class="filters">
+    <div class="filters" id="filtersPanel">
         <div class="filter-group">
             <label>Search</label>
             <input type="text" id="searchInput" placeholder="Name, phone, email..." oninput="filterLeads()">
         </div>
-        <div class="filter-group">
+        <div class="filter-group advanced-only">
             <label>Status</label>
             <select id="statusFilter" onchange="filterLeads()">
                 <option value="">All Statuses</option>
@@ -659,21 +678,21 @@
                 <option value="lost">Lost</option>
             </select>
         </div>
-        <div class="filter-group">
+        <div class="filter-group advanced-only">
             <label>Service</label>
             <select id="serviceFilter" onchange="filterLeads()">
                 <option value="">All Services</option>
             </select>
         </div>
         <div class="filter-group">
-            <label>Date Range</label>
+            <label>Date</label>
             <input type="date" id="dateFilter" onchange="filterLeads()">
             <div class="checkbox-row">
                 <label><input type="checkbox" id="hideClosed" checked onchange="filterLeads()"> Hide closed</label>
                 <label><input type="checkbox" id="onlyPhotos" onchange="filterLeads()"> Only with photos</label>
             </div>
         </div>
-        <div class="filter-group">
+        <div class="filter-group advanced-only">
             <label>Sort</label>
             <select id="sortBy" onchange="filterLeads()">
                 <option value="newest">Newest</option>
@@ -684,7 +703,7 @@
         </div>
     </div>
 
-    <div class="stats">
+    <div class="stats advanced-only" id="statsPanel">
         <div class="stat-card">
             <div class="stat-label">Total Leads</div>
             <div class="stat-value" id="totalLeads">0</div>
@@ -1119,6 +1138,8 @@
                             <input type="text" id="editLostReason" placeholder="Too expensive, no response, went with competitor..." value="${lead.lostReason ? String(lead.lostReason).replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''}">
                         </div>
                         <div class="modal-actions">
+                            <button class="btn btn-danger" onclick="deleteLead('${lead.id}')">Delete Lead</button>
+                            <div class="spacer"></div>
                             <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                             <button class="btn btn-primary" onclick="saveLeadEdits('${lead.id}')">Save</button>
                         </div>
@@ -1415,10 +1436,63 @@
             }
         }
 
+        async function deleteLead(leadId) {
+            const lead = allLeads.find(l => l.id == leadId);
+            const name = lead ? displayName(lead) : 'this lead';
+
+            if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+
+            try {
+                const response = await fetch(`/api/leads/${leadId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        ...getAuthHeaders()
+                    }
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('adminPassword');
+                    document.getElementById('loginScreen').classList.remove('hidden');
+                    document.getElementById('dashboard').classList.add('hidden');
+                    return;
+                }
+
+                if (!response.ok) throw new Error('Failed to delete lead');
+
+                allLeads = allLeads.filter(l => l.id != leadId);
+                updateStats();
+                filterLeads();
+                closeModal();
+            } catch (e) {
+                console.error('Error deleting lead:', e);
+                alert('Failed to delete lead');
+            }
+        }
+
+        // Simplified mode by default (toggle advanced)
+        const ADVANCED_KEY = 'adminAdvancedMode';
+        let advancedMode = localStorage.getItem(ADVANCED_KEY) === '1';
+
+        function applyAdvancedMode() {
+            const advancedEls = document.querySelectorAll('.advanced-only');
+            advancedEls.forEach(el => el.classList.toggle('advanced-hidden', !advancedMode));
+            const btn = document.getElementById('toggleAdvancedBtn');
+            if (btn) btn.textContent = advancedMode ? 'Simple' : 'Advanced';
+        }
+
+        function toggleAdvanced() {
+            advancedMode = !advancedMode;
+            localStorage.setItem(ADVANCED_KEY, advancedMode ? '1' : '0');
+            applyAdvancedMode();
+        }
+
         if (authPassword === ADMIN_PASSWORD) {
             loadLeads();
             setInterval(loadLeads, 30000); // Auto-refresh every 30 seconds
         }
+
+        // Apply advanced mode immediately on load
+        applyAdvancedMode();
     </script>
 </body>
 </html>
