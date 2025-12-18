@@ -6,6 +6,40 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const app = express();
 
+// Unsigned Cloudinary upload helper (avoids API secret/signature issues entirely).
+// Requires ONLY: cloud name + an UNSIGNED upload preset.
+async function cloudinaryUnsignedUpload({ cloudName, uploadPreset, dataUri, folder }) {
+    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`;
+    const body = new URLSearchParams();
+    body.set('file', dataUri);
+    body.set('upload_preset', uploadPreset);
+    if (folder) body.set('folder', folder);
+
+    const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+    });
+
+    const text = await resp.text();
+    let json;
+    try {
+        json = JSON.parse(text);
+    } catch {
+        throw new Error(`Cloudinary unsigned upload: non-JSON response (${resp.status})`);
+    }
+
+    if (!resp.ok) {
+        const msg = json?.error?.message || `HTTP ${resp.status}`;
+        const err = new Error(`Cloudinary unsigned upload failed: ${msg}`);
+        err.http_code = resp.status;
+        err.error = json?.error;
+        throw err;
+    }
+
+    return json;
+}
+
 // Cloudinary configuration
 // Try CLOUDINARY_URL first (recommended), then individual credentials
 let cloudinaryConfigured = false;
@@ -221,10 +255,40 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
                 console.error('Error type:', error.name);
                 console.error('Error message:', error.message);
                 console.error('Error details:', error.http_code, error.error?.message);
-                console.warn('Falling back to base64 storage');
-                // Fallback: store as base64 data URI
+
+                // If signed auth is broken, try UNSIGNED preset upload (no API secret/signature).
+                const unsignedPreset = process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET
+                    ? String(process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET).trim()
+                    : '';
+                const cloudName = cloudinary.config().cloud_name;
                 const base64 = file.buffer.toString('base64');
                 const dataUri = `data:${file.mimetype || 'image/jpeg'};base64,${base64}`;
+
+                const isSignatureAuthIssue =
+                    error?.http_code === 401 ||
+                    (typeof error?.message === 'string' && error.message.toLowerCase().includes('invalid signature')) ||
+                    (typeof error?.error?.message === 'string' && error.error.message.toLowerCase().includes('invalid signature'));
+
+                if (unsignedPreset && cloudName && isSignatureAuthIssue) {
+                    try {
+                        console.warn('Trying Cloudinary UNSIGNED preset upload...');
+                        const unsignedRes = await cloudinaryUnsignedUpload({
+                            cloudName,
+                            uploadPreset: unsignedPreset,
+                            dataUri,
+                            folder: 'brick-staining-leads'
+                        });
+                        photoUrls.push(unsignedRes.secure_url);
+                        console.log('Photo uploaded to Cloudinary (unsigned):', unsignedRes.secure_url);
+                        continue;
+                    } catch (unsignedErr) {
+                        console.error('❌ Unsigned Cloudinary upload failed:', unsignedErr.message);
+                        console.error('Unsigned error details:', unsignedErr.http_code, unsignedErr.error?.message);
+                    }
+                }
+
+                console.warn('Falling back to base64 storage');
+                // Fallback: store as base64 data URI
                 photoData.push({
                     name: file.originalname,
                     data: dataUri,
@@ -541,7 +605,8 @@ app.get('/api/test-cloudinary', async (req, res) => {
             has_CLOUDINARY_URL: !!process.env.CLOUDINARY_URL,
             has_CLOUDINARY_CLOUD_NAME: !!process.env.CLOUDINARY_CLOUD_NAME,
             has_CLOUDINARY_API_KEY: !!process.env.CLOUDINARY_API_KEY,
-            has_CLOUDINARY_API_SECRET: !!process.env.CLOUDINARY_API_SECRET
+            has_CLOUDINARY_API_SECRET: !!process.env.CLOUDINARY_API_SECRET,
+            has_CLOUDINARY_UNSIGNED_UPLOAD_PRESET: !!process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET
         }
     };
 
@@ -567,6 +632,30 @@ app.get('/api/test-cloudinary', async (req, res) => {
                 error_code: error.http_code,
                 error_details: error.error ? error.error.message : 'No details'
             };
+        }
+
+        // If an unsigned preset is configured, test that too (no API secret needed).
+        const unsignedPreset = process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET
+            ? String(process.env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET).trim()
+            : '';
+        if (unsignedPreset && config.cloud_name) {
+            try {
+                const testDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+                const unsignedRes = await cloudinaryUnsignedUpload({
+                    cloudName: config.cloud_name,
+                    uploadPreset: unsignedPreset,
+                    dataUri: testDataUri,
+                    folder: 'test'
+                });
+                diagnostics.unsigned_test = { success: true, url: unsignedRes.secure_url };
+            } catch (e) {
+                diagnostics.unsigned_test = {
+                    success: false,
+                    error_message: e.message,
+                    error_code: e.http_code,
+                    error_details: e.error ? e.error.message : 'No details'
+                };
+            }
         }
 
         // Try a real upload test with a tiny image
