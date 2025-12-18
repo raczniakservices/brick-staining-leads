@@ -268,8 +268,8 @@ app.post('/api/upload-photos', upload.fields([{ name: 'photos', maxCount: 5 }, {
                     const unsignedRes = await cloudinaryUnsignedUpload({
                         cloudName,
                         uploadPreset: unsignedPreset,
-                        dataUri,
-                        folder: 'brick-staining-leads'
+                        dataUri
+                        // Don't pass folder - let the preset handle it
                     });
                     photoUrls.push(unsignedRes.secure_url);
                     console.log('✅ Photo uploaded to Cloudinary (unsigned):', unsignedRes.secure_url);
