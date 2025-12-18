@@ -526,6 +526,85 @@ app.get('/estimate', (req, res) => {
 });
 
 // ===========================================
+// CLOUDINARY DIAGNOSTIC ENDPOINT
+// ===========================================
+app.get('/api/test-cloudinary', async (req, res) => {
+    const diagnostics = {
+        configured: cloudinaryConfigured,
+        config: null,
+        test_result: null,
+        error: null
+    };
+
+    // Show what config values we have
+    if (cloudinaryConfigured) {
+        const config = cloudinary.config();
+        diagnostics.config = {
+            cloud_name: config.cloud_name,
+            api_key: config.api_key ? config.api_key.substring(0, 5) + '...' : 'MISSING',
+            api_secret_length: config.api_secret ? config.api_secret.length : 0,
+            api_secret_present: !!config.api_secret
+        };
+
+        // Try a real upload test with a tiny image
+        try {
+            const testBuffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+            
+            const uploadResult = await new Promise((resolve, reject) => {
+                cloudinary.uploader.upload_stream(
+                    { 
+                        folder: 'test',
+                        resource_type: 'image'
+                    },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    }
+                ).end(testBuffer);
+            });
+
+            diagnostics.test_result = {
+                success: true,
+                url: uploadResult.secure_url,
+                public_id: uploadResult.public_id
+            };
+
+            // Clean up test image
+            try {
+                await cloudinary.uploader.destroy(uploadResult.public_id);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+
+        } catch (error) {
+            diagnostics.test_result = {
+                success: false,
+                error_message: error.message,
+                error_code: error.http_code,
+                error_details: error.error ? error.error.message : 'No details'
+            };
+
+            // Specific error diagnosis
+            if (error.message && error.message.includes('Invalid Signature')) {
+                diagnostics.diagnosis = '❌ API_SECRET is WRONG - Copy it exactly from Cloudinary dashboard';
+            } else if (error.message && error.message.includes('Invalid API Key')) {
+                diagnostics.diagnosis = '❌ API_KEY is WRONG - Copy it exactly from Cloudinary dashboard';
+            } else if (error.message && error.message.includes('Cloud name')) {
+                diagnostics.diagnosis = '❌ CLOUD_NAME is WRONG - Copy it exactly from Cloudinary dashboard';
+            } else if (error.http_code === 401) {
+                diagnostics.diagnosis = '❌ AUTHENTICATION FAILED - One or more credentials are wrong. Double-check all 3 values.';
+            } else {
+                diagnostics.diagnosis = `❓ Unknown error: ${error.message}`;
+            }
+        }
+    } else {
+        diagnostics.error = 'Cloudinary not configured - check environment variables';
+    }
+
+    res.json(diagnostics);
+});
+
+// ===========================================
 // START
 // ===========================================
 app.listen(CONFIG.PORT, () => {
